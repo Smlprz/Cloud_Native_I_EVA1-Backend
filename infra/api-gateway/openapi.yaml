@@ -1,0 +1,114 @@
+openapi: "3.0.1"
+info:
+  title: "pedidos360-api"
+  description: >
+    Definicion del AWS API Gateway (HTTP API) para Pedidos360.
+    Punto de entrada unico hacia los microservicios de Productos y Carrito.
+    Valida el JWT de Azure AD en el borde (firma via JWKS + issuer + audience).
+  version: "1.0.0"
+
+# CORS: solo el dominio del frontend puede llamar al gateway.
+x-amazon-apigateway-cors:
+  allowOrigins:
+    - "https://REEMPLAZAR-DOMINIO-FRONTEND"      # ej: https://pedidos360.midominio.com
+    - "http://localhost:4200"                    # desarrollo local
+  allowMethods:
+    - GET
+    - POST
+    - PUT
+    - DELETE
+    - OPTIONS
+  allowHeaders:
+    - Authorization
+    - Content-Type
+  maxAge: 3600
+
+components:
+  securitySchemes:
+    azureJwt:
+      type: oauth2
+      flows: {}
+      # Authorizer nativo de tipo JWT del HTTP API.
+      x-amazon-apigateway-authorizer:
+        type: jwt
+        identitySource: "$request.header.Authorization"
+        jwtConfiguration:
+          # issuer = https://login.microsoftonline.com/<TENANT_ID>/v2.0
+          issuer: "https://login.microsoftonline.com/REEMPLAZAR_TENANT_ID/v2.0"
+          # audience = App ID URI o Client ID de la API registrada en Azure
+          audience:
+            - "api://REEMPLAZAR_CLIENT_ID"
+
+# Por defecto, toda ruta exige un JWT valido.
+security:
+  - azureJwt: []
+
+paths:
+
+  # ---------- Catalogo de productos ----------
+  /productos:
+    get:
+      summary: Listar catalogo (publico)
+      security: []          # el catalogo se puede consultar sin token
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: GET
+        # URL interna del microservicio (ALB / VPC Link hacia las instancias EC2)
+        uri: "http://REEMPLAZAR-HOST-INTERNO-PRODUCTOS:8080/api/productos"
+        connectionType: INTERNET
+        payloadFormatVersion: "1.0"
+    post:
+      summary: Crear producto (requiere rol VENDEDOR/ADMIN, validado en el microservicio)
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: POST
+        uri: "http://REEMPLAZAR-HOST-INTERNO-PRODUCTOS:8080/api/productos"
+        connectionType: INTERNET
+        payloadFormatVersion: "1.0"
+
+  /productos/{proxy+}:
+    x-amazon-apigateway-any-method:
+      summary: Resto de operaciones del catalogo (GET/{id}, PUT, DELETE, busquedas)
+      parameters:
+        - name: proxy
+          in: path
+          required: true
+          schema:
+            type: string
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: ANY
+        uri: "http://REEMPLAZAR-HOST-INTERNO-PRODUCTOS:8080/api/productos/{proxy}"
+        connectionType: INTERNET
+        payloadFormatVersion: "1.0"
+        requestParameters:
+          overwrite:path.proxy: "$request.path.proxy"
+
+  # ---------- Carrito / Pedidos (siempre protegido) ----------
+  /carrito:
+    x-amazon-apigateway-any-method:
+      summary: Ver / vaciar carrito
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: ANY
+        uri: "http://REEMPLAZAR-HOST-INTERNO-CARRITO:8080/api/carrito"
+        connectionType: INTERNET
+        payloadFormatVersion: "1.0"
+
+  /carrito/{proxy+}:
+    x-amazon-apigateway-any-method:
+      summary: Items, checkout y pedidos del carrito
+      parameters:
+        - name: proxy
+          in: path
+          required: true
+          schema:
+            type: string
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: ANY
+        uri: "http://REEMPLAZAR-HOST-INTERNO-CARRITO:8080/api/carrito/{proxy}"
+        connectionType: INTERNET
+        payloadFormatVersion: "1.0"
+        requestParameters:
+          overwrite:path.proxy: "$request.path.proxy"
