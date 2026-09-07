@@ -8,6 +8,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -21,12 +22,11 @@ import java.util.stream.Collectors;
  *
  *  - claim "scp"  -> autoridades  SCOPE_<scope>   (permisos delegados de la API).
  *  - roles:
- *      1) si el token trae el claim "roles" (App Roles de Azure), se usan tal cual.
- *      2) si NO lo trae (el tenant educativo no permite asignar App Roles), el rol
- *         se resuelve en el backend a partir del email del usuario:
- *           email en la lista de admins    -> ROLE_ADMIN
- *           email en la lista de vendedores-> ROLE_VENDEDOR
- *           en otro caso                   -> ROLE_CLIENTE (rol por defecto)
+ *      1) si el token trae el claim "roles" (App Roles de Azure), se normaliza cada
+ *         valor a ADMIN / VENDEDOR / CLIENTE (tolera "Administrador", "admin",
+ *         "Vendedor", "Cliente", con o sin acentos y en cualquier caja).
+ *      2) si NO lo trae, el rol se resuelve por el email del usuario contra las
+ *         listas app.roles.admin / app.roles.vendedor; el resto queda como CLIENTE.
  */
 public class AzureJwtConverter implements Converter<Jwt, AbstractAuthenticationToken> {
 
@@ -35,8 +35,8 @@ public class AzureJwtConverter implements Converter<Jwt, AbstractAuthenticationT
     private final Set<String> vendedores;
 
     public AzureJwtConverter(Collection<String> admins, Collection<String> vendedores) {
-        this.admins = normalizar(admins);
-        this.vendedores = normalizar(vendedores);
+        this.admins = normalizarEmails(admins);
+        this.vendedores = normalizarEmails(vendedores);
 
         JwtGrantedAuthoritiesConverter scopes = new JwtGrantedAuthoritiesConverter();
         scopes.setAuthorityPrefix("SCOPE_");
@@ -53,6 +53,8 @@ public class AzureJwtConverter implements Converter<Jwt, AbstractAuthenticationT
         List<String> rolesClaim = jwt.getClaimAsStringList("roles");
         if (rolesClaim != null && !rolesClaim.isEmpty()) {
             return rolesClaim.stream()
+                    .map(AzureJwtConverter::canonicalizarRol)
+                    .distinct()
                     .map(r -> new SimpleGrantedAuthority("ROLE_" + r))
                     .collect(Collectors.toList());
         }
@@ -74,12 +76,27 @@ public class AzureJwtConverter implements Converter<Jwt, AbstractAuthenticationT
         return List.of(new SimpleGrantedAuthority("ROLE_" + rol));
     }
 
+    /** "Administrador" / "admin" -> ADMIN ; "Vendedor" -> VENDEDOR ; "Cliente" -> CLIENTE. */
+    static String canonicalizarRol(String valor) {
+        String v = sinAcentos(valor).toUpperCase(Locale.ROOT).trim();
+        if (v.startsWith("ADMIN")) {
+            return "ADMIN";
+        }
+        if (v.startsWith("VEND") || v.startsWith("SELL")) {
+            return "VENDEDOR";
+        }
+        if (v.startsWith("CLIENT") || v.startsWith("CUSTOM")) {
+            return "CLIENTE";
+        }
+        return v;
+    }
+
     @Override
     public AbstractAuthenticationToken convert(Jwt source) {
         return delegate.convert(source);
     }
 
-    private static Set<String> normalizar(Collection<String> valores) {
+    private static Set<String> normalizarEmails(Collection<String> valores) {
         Set<String> set = new HashSet<>();
         if (valores != null) {
             for (String v : valores) {
@@ -89,6 +106,10 @@ public class AzureJwtConverter implements Converter<Jwt, AbstractAuthenticationT
             }
         }
         return set;
+    }
+
+    private static String sinAcentos(String s) {
+        return Normalizer.normalize(s, Normalizer.Form.NFD).replaceAll("\\p{M}", "");
     }
 
     private static String primerNoNulo(String... valores) {

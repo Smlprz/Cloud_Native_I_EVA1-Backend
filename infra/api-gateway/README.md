@@ -4,55 +4,62 @@ Capa perimetral: **único punto de entrada** hacia los microservicios de Product
 y Carrito. Valida el JWT de Azure AD en el borde (firma vía JWKS + `issuer` +
 `audience`) y aplica CORS restringido al dominio del frontend.
 
-## Qué contiene
+## Qué contiene `openapi.yaml`
 
-- `openapi.yaml` — definición del **HTTP API** lista para importar. Incluye:
-  - `x-amazon-apigateway-authorizer` de tipo **JWT** apuntando al `issuer` y
-    `audience` de Azure (el gateway descarga solo el JWKS del OIDC discovery).
-  - `security` global → toda ruta exige token, salvo `GET /productos` (catálogo público).
-  - `x-amazon-apigateway-cors` → solo el origen del frontend.
-  - Integraciones `http_proxy` hacia los microservicios (rutas limpias
-    `/productos/*` y `/carrito/*`).
+Definición del **HTTP API** lista para importar:
 
-## Antes de importar: reemplazar placeholders
+- `x-amazon-apigateway-authorizer` de tipo **JWT** (`issuer` + `audience` de Azure;
+  el gateway descarga solo el JWKS del OIDC discovery).
+- `security` global → toda ruta exige token, **salvo `GET /productos` y
+  `GET /productos/{id}`** (catálogo público).
+- `x-amazon-apigateway-cors` → solo el origen del frontend.
+- Rutas **explícitas** (una por método) con integración `http_proxy` hacia la EC2:
+  - `/productos*` → `http://18.212.91.126:8081/api/productos*`
+  - `/carrito*`  → `http://18.212.91.126:8082/api/carrito*`
 
-| Placeholder | Dónde se obtiene |
+> Rutas explícitas en vez de `{proxy+}` / `x-amazon-apigateway-any-method`:
+> esa sintaxis es de REST API (v1) y **un HTTP API la ignora al importar** (deja
+> rutas sin crear → 404).
+
+## Antes de importar: reemplazar
+
+| Valor | Dónde se obtiene |
 |---|---|
-| `REEMPLAZAR_TENANT_ID` | Azure Portal → Microsoft Entra ID → Overview → Tenant ID |
-| `REEMPLAZAR_CLIENT_ID` | App Registration de la API → Application (client) ID / App ID URI |
-| `REEMPLAZAR-DOMINIO-FRONTEND` | Dominio donde se publica el frontend Angular/React |
-| `REEMPLAZAR-HOST-INTERNO-PRODUCTOS` | DNS del ALB / IP privada de las EC2 de ms-productos |
-| `REEMPLAZAR-HOST-INTERNO-CARRITO` | DNS del ALB / IP privada de las EC2 de ms-carrito |
+| `REEMPLAZAR_TENANT_ID` | Entra ID → Overview → Directory (tenant) ID |
+| `REEMPLAZAR_CLIENT_ID` | App Registration `pedidos360-api` → Application (client) ID |
+| `18.212.91.126` (x4) | IP pública actual de la EC2 (cámbiala si la instancia se reinició sin Elastic IP) |
+| `allowOrigins` | agregar el dominio real del frontend cuando exista |
 
 ## Desplegar (consola)
 
 1. API Gateway → **Create API** → **HTTP API** → **Import**.
-2. Pegar / subir `openapi.yaml` ya editado.
-3. Revisar que el **Authorizer** `azureJwt` quedó asociado a todas las rutas
-   excepto `GET /productos`.
-4. Crear un stage (ej. `prod`) con **Auto-deploy**.
-5. Anotar la **Invoke URL** — es la que consume el frontend.
+2. Subir el `openapi.yaml` ya editado.
+3. En **Routes**, verificar que aparecen las 7 rutas
+   (`GET/POST /productos`, `GET/PUT/DELETE /productos/{id}`, `GET/DELETE /carrito`,
+   `POST /carrito/items`, `PUT/DELETE /carrito/items/{itemId}`,
+   `POST /carrito/checkout`, `GET /carrito/pedidos`).
+4. En **Authorization**, verificar que el authorizer `azureJwt` está en todas
+   menos en los `GET` de productos.
+5. Crear un stage (ej. `prod`) con **Auto-deploy** → anotar la **Invoke URL**.
 
-## Desplegar (AWS CLI, resumido)
+## Requisito en la EC2
 
-```bash
-aws apigatewayv2 import-api --body file://openapi.yaml
-# tomar el ApiId devuelto
-aws apigatewayv2 create-stage --api-id <ApiId> --stage-name prod --auto-deploy
-```
+El Security Group debe permitir **entrada** a los puertos **8081** y **8082**
+(el gateway llega por IP pública porque `connectionType: INTERNET`).
 
 ## Evidencias para la evaluación
 
 ```bash
-# 1. Petición SIN token a una ruta protegida -> 401
-curl -i https://<invoke-url>/carrito
-
-# 2. Petición con token inválido/expirado -> 401
-curl -i -H "Authorization: Bearer eyJ...roto..." https://<invoke-url>/carrito
-
-# 3. Petición con token válido de Azure -> 200
-curl -i -H "Authorization: Bearer $TOKEN" https://<invoke-url>/carrito
-
-# 4. Catálogo público (sin token) -> 200
-curl -i https://<invoke-url>/productos
+curl -i https://<invoke-url>/prod/productos
 ```
+→ **200** con el catálogo (público).
+
+```bash
+curl -i https://<invoke-url>/prod/carrito
+```
+→ **401** (ruta protegida, sin token).
+
+```bash
+curl -i -H "Authorization: Bearer $TOKEN" https://<invoke-url>/prod/carrito
+```
+→ **200** con un token válido de Azure.

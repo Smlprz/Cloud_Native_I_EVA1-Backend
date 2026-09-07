@@ -10,8 +10,9 @@ info:
 # CORS: solo el dominio del frontend puede llamar al gateway.
 x-amazon-apigateway-cors:
   allowOrigins:
-    - "http://localhost:3000"      # ej: https://pedidos360.midominio.com
-    - "http://localhost:4200"                    # desarrollo local
+    - "http://localhost:3000"      # frontend en desarrollo (CRA)
+    - "http://localhost:4200"      # alternativa (Angular)
+    # - "https://pedidos360.midominio.com"   # dominio real cuando exista
   allowMethods:
     - GET
     - POST
@@ -34,81 +35,153 @@ components:
         identitySource: "$request.header.Authorization"
         jwtConfiguration:
           # issuer = https://login.microsoftonline.com/<TENANT_ID>/v2.0
-          issuer: "https://login.microsoftonline.com/REEMPLAZAR_TENANT_ID/v2.0"
-          # audience = App ID URI o Client ID de la API registrada en Azure
+          issuer: "https://login.microsoftonline.com/e5372bf0-c5e3-4286-887c-79069f209c1f/v2.0"
+          # audience = App ID URI de la API registrada en Azure
           audience:
-            - "api://REEMPLAZAR_CLIENT_ID"
+            - "api://ce3e5b61-0b01-4a67-a42b-f15ccb364024"
 
-# Por defecto, toda ruta exige un JWT valido.
+# Por defecto toda ruta exige un JWT valido; el catalogo (GET) se marca publico.
 security:
   - azureJwt: []
 
 paths:
 
-  # ---------- Catalogo de productos ----------
+  # =========================================================
+  #  Catalogo de productos  ->  EC2 :8081  /api/productos
+  # =========================================================
   /productos:
     get:
       summary: Listar catalogo (publico)
-      security: []          # el catalogo se puede consultar sin token
+      security: []
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: GET
-        # URL interna del microservicio (ALB / VPC Link hacia las instancias EC2)
-        uri: "http:/52.54.163.23:8081/api/productos"
+        uri: "http://18.212.91.126:8081/api/productos"
         connectionType: INTERNET
         payloadFormatVersion: "1.0"
     post:
-      summary: Crear producto (requiere rol VENDEDOR/ADMIN, validado en el microservicio)
+      summary: Crear producto (scope productos.write + rol VENDEDOR/ADMIN, validado en el microservicio)
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: POST
-        uri: "http:/52.54.163.23:8081/api/productos"
+        uri: "http://18.212.91.126:8081/api/productos"
         connectionType: INTERNET
         payloadFormatVersion: "1.0"
 
-  /productos/{proxy+}:
-    x-amazon-apigateway-any-method:
-      summary: Resto de operaciones del catalogo (GET/{id}, PUT, DELETE, busquedas)
-      parameters:
-        - name: proxy
-          in: path
-          required: true
-          schema:
-            type: string
+  /productos/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: Detalle de producto (publico)
+      security: []
       x-amazon-apigateway-integration:
         type: http_proxy
-        httpMethod: ANY
-        uri: "http:/52.54.163.23:8081/api/productos/{proxy}"
+        httpMethod: GET
+        uri: "http://18.212.91.126:8081/api/productos/{id}"
         connectionType: INTERNET
         payloadFormatVersion: "1.0"
         requestParameters:
-          overwrite:path.proxy: "$request.path.proxy"
+          "overwrite:path.id": "$request.path.id"
+    put:
+      summary: Actualizar producto
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: PUT
+        uri: "http://18.212.91.126:8081/api/productos/{id}"
+        connectionType: INTERNET
+        payloadFormatVersion: "1.0"
+        requestParameters:
+          "overwrite:path.id": "$request.path.id"
+    delete:
+      summary: Eliminar producto (rol ADMIN)
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: DELETE
+        uri: "http://18.212.91.126:8081/api/productos/{id}"
+        connectionType: INTERNET
+        payloadFormatVersion: "1.0"
+        requestParameters:
+          "overwrite:path.id": "$request.path.id"
 
-  # ---------- Carrito / Pedidos (siempre protegido) ----------
+  # =========================================================
+  #  Carrito / Pedidos  ->  EC2 :8082  /api/carrito   (todo protegido)
+  # =========================================================
   /carrito:
-    x-amazon-apigateway-any-method:
-      summary: Ver / vaciar carrito
+    get:
+      summary: Ver el carrito del usuario
       x-amazon-apigateway-integration:
         type: http_proxy
-        httpMethod: ANY
-        uri: "http://52.54.163.23:8082/api/carrito"
+        httpMethod: GET
+        uri: "http://18.212.91.126:8082/api/carrito"
+        connectionType: INTERNET
+        payloadFormatVersion: "1.0"
+    delete:
+      summary: Vaciar el carrito
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: DELETE
+        uri: "http://18.212.91.126:8082/api/carrito"
         connectionType: INTERNET
         payloadFormatVersion: "1.0"
 
-  /carrito/{proxy+}:
-    x-amazon-apigateway-any-method:
-      summary: Items, checkout y pedidos del carrito
-      parameters:
-        - name: proxy
-          in: path
-          required: true
-          schema:
-            type: string
+  /carrito/items:
+    post:
+      summary: Agregar item al carrito
       x-amazon-apigateway-integration:
         type: http_proxy
-        httpMethod: ANY
-        uri: "http://52.54.163.23:8082/api/carrito/{proxy}"
+        httpMethod: POST
+        uri: "http://18.212.91.126:8082/api/carrito/items"
+        connectionType: INTERNET
+        payloadFormatVersion: "1.0"
+
+  /carrito/items/{itemId}:
+    parameters:
+      - name: itemId
+        in: path
+        required: true
+        schema:
+          type: string
+    put:
+      summary: Cambiar la cantidad de un item
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: PUT
+        uri: "http://18.212.91.126:8082/api/carrito/items/{itemId}"
         connectionType: INTERNET
         payloadFormatVersion: "1.0"
         requestParameters:
-          overwrite:path.proxy: "$request.path.proxy"
+          "overwrite:path.itemId": "$request.path.itemId"
+    delete:
+      summary: Quitar un item del carrito
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: DELETE
+        uri: "http://18.212.91.126:8082/api/carrito/items/{itemId}"
+        connectionType: INTERNET
+        payloadFormatVersion: "1.0"
+        requestParameters:
+          "overwrite:path.itemId": "$request.path.itemId"
+
+  /carrito/checkout:
+    post:
+      summary: Confirmar el pedido
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: POST
+        uri: "http://18.212.91.126:8082/api/carrito/checkout"
+        connectionType: INTERNET
+        payloadFormatVersion: "1.0"
+
+  /carrito/pedidos:
+    get:
+      summary: Historial de pedidos del usuario
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: GET
+        uri: "http://18.212.91.126:8082/api/carrito/pedidos"
+        connectionType: INTERNET
+        payloadFormatVersion: "1.0"
