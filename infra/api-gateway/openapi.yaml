@@ -10,7 +10,7 @@ info:
 # CORS: solo el dominio del frontend puede llamar al gateway.
 x-amazon-apigateway-cors:
   allowOrigins:
-    - "https://REEMPLAZAR-DOMINIO-FRONTEND"      # ej: https://pedidos360.midominio.com
+    - "http://localhost:3000"      # ej: https://pedidos360.midominio.com
     - "http://localhost:4200"                    # desarrollo local
   allowMethods:
     - GET
@@ -54,7 +54,7 @@ paths:
         type: http_proxy
         httpMethod: GET
         # URL interna del microservicio (ALB / VPC Link hacia las instancias EC2)
-        uri: "http://REEMPLAZAR-HOST-INTERNO-PRODUCTOS:8080/api/productos"
+        uri: "http:/52.54.163.23:8081/api/productos"
         connectionType: INTERNET
         payloadFormatVersion: "1.0"
     post:
@@ -62,7 +62,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: POST
-        uri: "http://REEMPLAZAR-HOST-INTERNO-PRODUCTOS:8080/api/productos"
+        uri: "http:/52.54.163.23:8081/api/productos"
         connectionType: INTERNET
         payloadFormatVersion: "1.0"
 
@@ -78,7 +78,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: ANY
-        uri: "http://REEMPLAZAR-HOST-INTERNO-PRODUCTOS:8080/api/productos/{proxy}"
+        uri: "http:/52.54.163.23:8081/api/productos/{proxy}"
         connectionType: INTERNET
         payloadFormatVersion: "1.0"
         requestParameters:
@@ -91,7 +91,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: ANY
-        uri: "http://REEMPLAZAR-HOST-INTERNO-CARRITO:8080/api/carrito"
+        uri: "http://52.54.163.23:8082/api/carrito"
         connectionType: INTERNET
         payloadFormatVersion: "1.0"
 
@@ -107,7 +107,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: ANY
-        uri: "http://REEMPLAZAR-HOST-INTERNO-CARRITO:8080/api/carrito/{proxy}"
+        uri: "http://52.54.163.23:8082/api/carrito/{proxy}"
         connectionType: INTERNET
         payloadFormatVersion: "1.0"
         requestParameters:
