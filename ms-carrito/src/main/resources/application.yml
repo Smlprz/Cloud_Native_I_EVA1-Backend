@@ -41,6 +41,13 @@ security:
     # Origen(es) del frontend, separados por coma. React (CRA) usa 3000 (o 3001 si 3000 esta ocupado).
     allowed-origins: ${SECURITY_CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:3001}
 
+# Roles cuando el token de Azure NO trae el claim "roles" (tenant sin App Roles).
+# Listas de emails separadas por coma; el resto de usuarios queda como CLIENTE.
+app:
+  roles:
+    admin: ${APP_ROLES_ADMIN:}
+    vendedor: ${APP_ROLES_VENDEDOR:}
+
 management:
   endpoints:
     web:

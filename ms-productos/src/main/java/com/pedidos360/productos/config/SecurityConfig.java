@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -31,6 +32,7 @@ import java.util.List;
  */
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
 
     @Value("${azure.jwk-set-uri}")
@@ -45,6 +47,13 @@ public class SecurityConfig {
     @Value("${security.cors.allowed-origins}")
     private List<String> allowedOrigins;
 
+    // Emails que mapean a ADMIN / VENDEDOR cuando el token no trae el claim "roles".
+    @Value("${app.roles.admin:}")
+    private List<String> adminEmails;
+
+    @Value("${app.roles.vendedor:}")
+    private List<String> vendedorEmails;
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, JwtDecoder jwtDecoder) throws Exception {
         http
@@ -57,15 +66,11 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/health", "/actuator/health/**", "/actuator/info").permitAll()
                         // Catalogo publico: se puede consultar sin sesion
                         .requestMatchers(HttpMethod.GET, "/api/productos", "/api/productos/**").permitAll()
-                        // Alta / edicion: vendedor o administrador
-                        .requestMatchers(HttpMethod.POST, "/api/productos/**").hasAnyRole("VENDEDOR", "ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/productos/**").hasAnyRole("VENDEDOR", "ADMIN")
-                        // Baja: solo administrador
-                        .requestMatchers(HttpMethod.DELETE, "/api/productos/**").hasRole("ADMIN")
+                        // Escrituras: autorizacion fina (scope + rol) con @PreAuthorize en el controlador
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth -> oauth.jwt(jwt -> jwt
                         .decoder(jwtDecoder)
-                        .jwtAuthenticationConverter(new AzureJwtConverter())));
+                        .jwtAuthenticationConverter(new AzureJwtConverter(adminEmails, vendedorEmails))));
         return http.build();
     }
 

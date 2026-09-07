@@ -23,9 +23,10 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 /**
- * API privada del carrito. Todo endpoint exige un JWT valido de Azure AD:
- *  - scope  carrito.read  para lectura,  carrito.write  para modificar.
- *  - rol    CLIENTE  o  ADMIN.
+ * API privada del carrito. Todo endpoint exige un JWT valido de Azure AD con:
+ *  - scope  carrito.read  para lectura,  carrito.write  para modificar (claim "scp").
+ *  - rol    CLIENTE  o  ADMIN  (del claim "roles" si existe, o resuelto en el backend
+ *           por email; ver AzureJwtConverter).
  * El AWS API Gateway valida el token en el borde y este servicio lo revalida.
  */
 @RestController

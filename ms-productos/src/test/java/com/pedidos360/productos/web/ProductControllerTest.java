@@ -15,7 +15,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * Pruebas basicas del catalogo + del filtro de validacion de JWT:
- * el GET es publico, y las escrituras exigen un token con el rol correcto.
+ * el GET es publico, y las escrituras exigen un token con el scope productos.write.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -51,7 +51,7 @@ class ProductControllerTest {
     }
 
     @Test
-    void crearConTokenSinRolDevuelve403() throws Exception {
+    void crearConTokenSinScopeDeEscrituraDevuelve403() throws Exception {
         mockMvc.perform(post("/api/productos")
                         .with(jwt().authorities(new org.springframework.security.core.authority.SimpleGrantedAuthority("SCOPE_productos.read")))
                         .contentType("application/json")
@@ -60,9 +60,20 @@ class ProductControllerTest {
     }
 
     @Test
-    void crearConRolVendedorDevuelve201() throws Exception {
+    void crearConScopeDeEscrituraPeroSinRolDevuelve403() throws Exception {
         mockMvc.perform(post("/api/productos")
-                        .with(jwt().authorities(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_VENDEDOR")))
+                        .with(jwt().authorities(new org.springframework.security.core.authority.SimpleGrantedAuthority("SCOPE_productos.write")))
+                        .contentType("application/json")
+                        .content(NUEVO_PRODUCTO))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void crearConScopeYRolVendedorDevuelve201() throws Exception {
+        mockMvc.perform(post("/api/productos")
+                        .with(jwt().authorities(
+                                new org.springframework.security.core.authority.SimpleGrantedAuthority("SCOPE_productos.write"),
+                                new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_VENDEDOR")))
                         .contentType("application/json")
                         .content(NUEVO_PRODUCTO))
                 .andExpect(status().isCreated())

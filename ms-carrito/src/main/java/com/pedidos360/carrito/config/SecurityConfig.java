@@ -47,6 +47,13 @@ public class SecurityConfig {
     @Value("${security.cors.allowed-origins}")
     private List<String> allowedOrigins;
 
+    // Emails que mapean a ADMIN / VENDEDOR cuando el token no trae el claim "roles".
+    @Value("${app.roles.admin:}")
+    private List<String> adminEmails;
+
+    @Value("${app.roles.vendedor:}")
+    private List<String> vendedorEmails;
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, JwtDecoder jwtDecoder) throws Exception {
         http
@@ -61,7 +68,7 @@ public class SecurityConfig {
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth -> oauth.jwt(jwt -> jwt
                         .decoder(jwtDecoder)
-                        .jwtAuthenticationConverter(new AzureJwtConverter())));
+                        .jwtAuthenticationConverter(new AzureJwtConverter(adminEmails, vendedorEmails))));
         return http.build();
     }
 

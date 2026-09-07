@@ -15,8 +15,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Verifica el filtro de validacion de JWT y la autorizacion estricta por rol + scope
- * exigida por el enunciado para el microservicio de Carrito.
+ * Verifica el filtro de validacion de JWT y la autorizacion por scope
+ * (claim "scp") para el microservicio de Carrito.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -36,9 +36,20 @@ class CarritoControllerSecurityTest {
     }
 
     @Test
-    void conTokenPeroSinScopeNiRolDevuelve403() throws Exception {
+    void conTokenPeroSinElScopeRequeridoDevuelve403() throws Exception {
+        // jwt() por defecto trae SCOPE_read / SCOPE_write, no carrito.read
         mockMvc.perform(get("/api/carrito").with(jwt()))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void conScopeYRolDevuelve200() throws Exception {
+        mockMvc.perform(get("/api/carrito").with(jwt()
+                        .jwt(builder -> builder.claim("oid", "user-xyz"))
+                        .authorities(
+                                new SimpleGrantedAuthority("SCOPE_carrito.read"),
+                                new SimpleGrantedAuthority("ROLE_CLIENTE"))))
+                .andExpect(status().isOk());
     }
 
     @Test
@@ -49,12 +60,9 @@ class CarritoControllerSecurityTest {
     }
 
     @Test
-    void conScopeYRolClienteDevuelve200() throws Exception {
-        mockMvc.perform(get("/api/carrito").with(jwt()
-                        .jwt(builder -> builder.claim("oid", "user-xyz"))
-                        .authorities(
-                                new SimpleGrantedAuthority("SCOPE_carrito.read"),
-                                new SimpleGrantedAuthority("ROLE_CLIENTE"))))
-                .andExpect(status().isOk());
+    void lecturaConSoloScopeDeEscrituraDevuelve403() throws Exception {
+        mockMvc.perform(get("/api/carrito")
+                        .with(jwt().authorities(new SimpleGrantedAuthority("SCOPE_carrito.write"))))
+                .andExpect(status().isForbidden());
     }
 }
