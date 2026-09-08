@@ -185,3 +185,38 @@ paths:
         uri: "http://18.212.91.126:8082/api/carrito/pedidos"
         connectionType: INTERNET
         payloadFormatVersion: "1.0"
+
+  # =========================================================
+  #  Identidad  ->  EC2 :8083  /api/auth
+  #  (cuando ms-auth tenga su propia EC2, cambiar la IP por la suya)
+  # =========================================================
+  /auth/health:
+    get:
+      summary: Health del microservicio de identidad (publico)
+      security: []
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: GET
+        uri: "http://18.212.91.126:8083/api/auth/health"
+        connectionType: INTERNET
+        payloadFormatVersion: "1.0"
+
+  /auth/me:
+    get:
+      summary: Perfil del usuario autenticado (registra el acceso)
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: GET
+        uri: "http://18.212.91.126:8083/api/auth/me"
+        connectionType: INTERNET
+        payloadFormatVersion: "1.0"
+
+  /auth/accesos:
+    get:
+      summary: Historial de accesos (propios; todos si ADMIN)
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: GET
+        uri: "http://18.212.91.126:8083/api/auth/accesos"
+        connectionType: INTERNET
+        payloadFormatVersion: "1.0"
