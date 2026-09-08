@@ -60,14 +60,26 @@ cd Backend-Cloud_Native-I/infra/deploy-ec2/ec2-auth
 PRODUCTOS_EC2_HOST=<ip-privada-o-publica-de-EC2-1> sudo -E docker compose up -d --build
 ```
 
+## IPs actuales
+
+| EC2 | IP | Puertos |
+|---|---|---|
+| #1 productos + MySQL | `3.225.255.55` | 8081 (API), 3307 (MySQL) |
+| #2 carrito | `44.193.187.57` | 8082 |
+| #3 auth (**Elastic IP**, fija) | `35.170.38.245` | 8083 |
+
+En #2 y #3, `PRODUCTOS_EC2_HOST=3.225.255.55`.
+
 ## API Gateway
 
-En `infra/api-gateway/openapi.yaml`, poner la IP de cada EC2 en sus rutas:
-- `/productos*` → `http://<EC2-1>:8081/...`
-- `/carrito*`  → `http://<EC2-2>:8082/...`
-- `/auth*`     → `http://<EC2-3>:8083/...`
+`infra/api-gateway/openapi.yaml` ya tiene esas 3 IPs. Para aplicar:
 
-Luego `aws apigatewayv2 reimport-api --api-id gzlei5wlz3 --body file://openapi.yaml --region us-east-1`.
+```bash
+aws apigatewayv2 reimport-api --api-id gzlei5wlz3 --body file://openapi.yaml --region us-east-1
+```
+
+Si #1 o #2 se reinician sin Elastic IP su IP cambia → editar `openapi.yaml` y
+re-importar. #3 ya tiene Elastic IP.
 
 ## Nota sobre `auth_db`
 

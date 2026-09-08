@@ -56,7 +56,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: GET
-        uri: "http://18.212.91.126:8081/api/productos"
+        uri: "http://3.225.255.55:8081/api/productos"
         connectionType: INTERNET
         payloadFormatVersion: "1.0"
     post:
@@ -64,7 +64,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: POST
-        uri: "http://18.212.91.126:8081/api/productos"
+        uri: "http://3.225.255.55:8081/api/productos"
         connectionType: INTERNET
         payloadFormatVersion: "1.0"
 
@@ -81,7 +81,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: GET
-        uri: "http://18.212.91.126:8081/api/productos/{id}"
+        uri: "http://3.225.255.55:8081/api/productos/{id}"
         connectionType: INTERNET
         payloadFormatVersion: "1.0"
         requestParameters:
@@ -91,7 +91,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: PUT
-        uri: "http://18.212.91.126:8081/api/productos/{id}"
+        uri: "http://3.225.255.55:8081/api/productos/{id}"
         connectionType: INTERNET
         payloadFormatVersion: "1.0"
         requestParameters:
@@ -101,7 +101,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: DELETE
-        uri: "http://18.212.91.126:8081/api/productos/{id}"
+        uri: "http://3.225.255.55:8081/api/productos/{id}"
         connectionType: INTERNET
         payloadFormatVersion: "1.0"
         requestParameters:
@@ -116,7 +116,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: GET
-        uri: "http://18.212.91.126:8082/api/carrito"
+        uri: "http://44.193.187.57:8082/api/carrito"
         connectionType: INTERNET
         payloadFormatVersion: "1.0"
     delete:
@@ -124,7 +124,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: DELETE
-        uri: "http://18.212.91.126:8082/api/carrito"
+        uri: "http://44.193.187.57:8082/api/carrito"
         connectionType: INTERNET
         payloadFormatVersion: "1.0"
 
@@ -134,7 +134,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: POST
-        uri: "http://18.212.91.126:8082/api/carrito/items"
+        uri: "http://44.193.187.57:8082/api/carrito/items"
         connectionType: INTERNET
         payloadFormatVersion: "1.0"
 
@@ -150,7 +150,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: PUT
-        uri: "http://18.212.91.126:8082/api/carrito/items/{itemId}"
+        uri: "http://44.193.187.57:8082/api/carrito/items/{itemId}"
         connectionType: INTERNET
         payloadFormatVersion: "1.0"
         requestParameters:
@@ -160,7 +160,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: DELETE
-        uri: "http://18.212.91.126:8082/api/carrito/items/{itemId}"
+        uri: "http://44.193.187.57:8082/api/carrito/items/{itemId}"
         connectionType: INTERNET
         payloadFormatVersion: "1.0"
         requestParameters:
@@ -172,7 +172,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: POST
-        uri: "http://18.212.91.126:8082/api/carrito/checkout"
+        uri: "http://44.193.187.57:8082/api/carrito/checkout"
         connectionType: INTERNET
         payloadFormatVersion: "1.0"
 
@@ -182,13 +182,12 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: GET
-        uri: "http://18.212.91.126:8082/api/carrito/pedidos"
+        uri: "http://44.193.187.57:8082/api/carrito/pedidos"
         connectionType: INTERNET
         payloadFormatVersion: "1.0"
 
   # =========================================================
-  #  Identidad  ->  EC2 :8083  /api/auth
-  #  (cuando ms-auth tenga su propia EC2, cambiar la IP por la suya)
+  #  Identidad  ->  EC2 #3 (Elastic IP) :8083  /api/auth
   # =========================================================
   /auth/health:
     get:
@@ -197,7 +196,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: GET
-        uri: "http://18.212.91.126:8083/api/auth/health"
+        uri: "http://35.170.38.245:8083/api/auth/health"
         connectionType: INTERNET
         payloadFormatVersion: "1.0"
 
@@ -207,7 +206,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: GET
-        uri: "http://18.212.91.126:8083/api/auth/me"
+        uri: "http://35.170.38.245:8083/api/auth/me"
         connectionType: INTERNET
         payloadFormatVersion: "1.0"
 
@@ -217,6 +216,6 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: GET
-        uri: "http://18.212.91.126:8083/api/auth/accesos"
+        uri: "http://35.170.38.245:8083/api/auth/accesos"
         connectionType: INTERNET
         payloadFormatVersion: "1.0"
