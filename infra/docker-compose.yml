@@ -1,0 +1,94 @@
+# Entorno local completo de Pedidos360 (backend).
+#   - Una instancia MySQL con un esquema por microservicio (productos_db, carrito_db, auth_db).
+#   - Los tres microservicios Spring Boot (productos :8081, carrito :8082, auth :8083).
+#
+# En AWS cada microservicio va en su propia EC2 (ver infra/deploy-ec2/). Este compose
+# es el entorno de desarrollo "todo junto" en una maquina.
+#
+# Uso:
+#   docker compose up -d --build
+#   docker compose logs -f ms-productos ms-carrito ms-auth
+#
+# Los valores de Azure son placeholders: los servicios arrancan igual y responden
+# 401 en las rutas protegidas (util para las capturas de la evaluacion). Para
+# probar con tokens reales, exportar AZURE_* antes de levantar (ver docs/AZURE-AD-SETUP.md).
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: pedidos360-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+    # 3307 en el host para no chocar con un MySQL local en 3306.
+    # Los microservicios se conectan por la red interna a mysql:3306 (no afectado).
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./mysql/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  ms-productos:
+    build: ../ms-productos
+    container_name: pedidos360-ms-productos
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/productos_db
+      SPRING_DATASOURCE_USERNAME: pedidos
+      SPRING_DATASOURCE_PASSWORD: pedidos
+      AZURE_JWK_SET_URI: ${AZURE_JWK_SET_URI:-https://login.microsoftonline.com/e5372bf0-c5e3-4286-887c-79069f209c1f/discovery/v2.0/keys}
+      AZURE_ISSUER: ${AZURE_ISSUER:-https://login.microsoftonline.com/e5372bf0-c5e3-4286-887c-79069f209c1f/v2.0}
+      AZURE_AUDIENCE: ${AZURE_AUDIENCE:-api://ce3e5b61-0b01-4a67-a42b-f15ccb364024}
+      SECURITY_CORS_ALLOWED_ORIGINS: ${FRONTEND_ORIGIN:-http://localhost:3000,http://localhost:3001}
+    ports:
+      - "8081:8080"
+
+  ms-carrito:
+    build: ../ms-carrito
+    container_name: pedidos360-ms-carrito
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      ms-productos:
+        condition: service_started
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/carrito_db
+      SPRING_DATASOURCE_USERNAME: pedidos
+      SPRING_DATASOURCE_PASSWORD: pedidos
+      SERVICES_PRODUCTOS_BASE_URL: http://ms-productos:8080
+      AZURE_JWK_SET_URI: ${AZURE_JWK_SET_URI:-https://login.microsoftonline.com/e5372bf0-c5e3-4286-887c-79069f209c1f/discovery/v2.0/keys}
+      AZURE_ISSUER: ${AZURE_ISSUER:-https://login.microsoftonline.com/e5372bf0-c5e3-4286-887c-79069f209c1f/v2.0}
+      AZURE_AUDIENCE: ${AZURE_AUDIENCE:-api://ce3e5b61-0b01-4a67-a42b-f15ccb364024}
+      SECURITY_CORS_ALLOWED_ORIGINS: ${FRONTEND_ORIGIN:-http://localhost:3000,http://localhost:3001}
+    ports:
+      - "8082:8080"
+
+  ms-auth:
+    build: ../ms-auth
+    container_name: pedidos360-ms-auth
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/auth_db
+      SPRING_DATASOURCE_USERNAME: pedidos
+      SPRING_DATASOURCE_PASSWORD: pedidos
+      AZURE_JWK_SET_URI: ${AZURE_JWK_SET_URI:-https://login.microsoftonline.com/e5372bf0-c5e3-4286-887c-79069f209c1f/discovery/v2.0/keys}
+      AZURE_ISSUER: ${AZURE_ISSUER:-https://login.microsoftonline.com/e5372bf0-c5e3-4286-887c-79069f209c1f/v2.0}
+      AZURE_AUDIENCE: ${AZURE_AUDIENCE:-api://ce3e5b61-0b01-4a67-a42b-f15ccb364024}
+      SECURITY_CORS_ALLOWED_ORIGINS: ${FRONTEND_ORIGIN:-http://localhost:3000,http://localhost:3001}
+    ports:
+      - "8083:8080"
+
+volumes:
+  mysql_data:

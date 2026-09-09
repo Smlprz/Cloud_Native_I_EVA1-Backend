@@ -1,0 +1,212 @@
+openapi: "3.0.1"
+info:
+  title: "pedidos360-api"
+  description: >
+    Definicion del AWS API Gateway (HTTP API) para Pedidos360.
+    Punto de entrada unico hacia los microservicios de Productos y Carrito.
+    Valida el JWT de Azure AD en el borde (firma via JWKS + issuer + audience).
+  version: "1.0.0"
+
+# CORS: solo el dominio del frontend puede llamar al gateway.
+x-amazon-apigateway-cors:
+  allowOrigins:
+    - "http://localhost:3000"      # frontend en desarrollo (CRA)
+    - "http://localhost:4200"      # alternativa (Angular)
+    # - "https://pedidos360.midominio.com"   # dominio real cuando exista
+  allowMethods:
+    - GET
+    - POST
+    - PUT
+    - DELETE
+    - OPTIONS
+  allowHeaders:
+    - Authorization
+    - Content-Type
+  maxAge: 3600
+
+components:
+  securitySchemes:
+    azureJwt:
+      type: oauth2
+      flows: {}
+      # Authorizer nativo de tipo JWT del HTTP API.
+      x-amazon-apigateway-authorizer:
+        type: jwt
+        identitySource: "$request.header.Authorization"
+        jwtConfiguration:
+          # issuer = https://login.microsoftonline.com/<TENANT_ID>/v2.0
+          issuer: "https://login.microsoftonline.com/e5372bf0-c5e3-4286-887c-79069f209c1f/v2.0"
+          # audience = App ID URI o Client ID de la API (Azure v2 puede emitir cualquiera)
+          audience:
+            - "api://ce3e5b61-0b01-4a67-a42b-f15ccb364024"
+            - "ce3e5b61-0b01-4a67-a42b-f15ccb364024"
+
+# Por defecto toda ruta exige un JWT valido; el catalogo (GET) se marca publico.
+security:
+  - azureJwt: []
+
+paths:
+
+  # =========================================================
+  #  Catalogo de productos  ->  EC2 :8081  /api/productos
+  # =========================================================
+  /productos:
+    get:
+      summary: Listar catalogo (publico)
+      security: []
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: GET
+        uri: "http://3.225.255.55:8081/api/productos"
+        connectionType: INTERNET
+        payloadFormatVersion: "1.0"
+    post:
+      summary: Crear producto (scope productos.write + rol VENDEDOR/ADMIN, validado en el microservicio)
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: POST
+        uri: "http://3.225.255.55:8081/api/productos"
+        connectionType: INTERNET
+        payloadFormatVersion: "1.0"
+
+  /productos/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: Detalle de producto (publico)
+      security: []
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: GET
+        uri: "http://3.225.255.55:8081/api/productos/{id}"
+        connectionType: INTERNET
+        payloadFormatVersion: "1.0"
+    put:
+      summary: Actualizar producto
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: PUT
+        uri: "http://3.225.255.55:8081/api/productos/{id}"
+        connectionType: INTERNET
+        payloadFormatVersion: "1.0"
+    delete:
+      summary: Eliminar producto (rol ADMIN)
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: DELETE
+        uri: "http://3.225.255.55:8081/api/productos/{id}"
+        connectionType: INTERNET
+        payloadFormatVersion: "1.0"
+
+  # =========================================================
+  #  Carrito / Pedidos  ->  EC2 :8082  /api/carrito   (todo protegido)
+  # =========================================================
+  /carrito:
+    get:
+      summary: Ver el carrito del usuario
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: GET
+        uri: "http://44.193.187.57:8082/api/carrito"
+        connectionType: INTERNET
+        payloadFormatVersion: "1.0"
+    delete:
+      summary: Vaciar el carrito
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: DELETE
+        uri: "http://44.193.187.57:8082/api/carrito"
+        connectionType: INTERNET
+        payloadFormatVersion: "1.0"
+
+  /carrito/items:
+    post:
+      summary: Agregar item al carrito
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: POST
+        uri: "http://44.193.187.57:8082/api/carrito/items"
+        connectionType: INTERNET
+        payloadFormatVersion: "1.0"
+
+  /carrito/items/{itemId}:
+    parameters:
+      - name: itemId
+        in: path
+        required: true
+        schema:
+          type: string
+    put:
+      summary: Cambiar la cantidad de un item
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: PUT
+        uri: "http://44.193.187.57:8082/api/carrito/items/{itemId}"
+        connectionType: INTERNET
+        payloadFormatVersion: "1.0"
+    delete:
+      summary: Quitar un item del carrito
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: DELETE
+        uri: "http://44.193.187.57:8082/api/carrito/items/{itemId}"
+        connectionType: INTERNET
+        payloadFormatVersion: "1.0"
+
+  /carrito/checkout:
+    post:
+      summary: Confirmar el pedido
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: POST
+        uri: "http://44.193.187.57:8082/api/carrito/checkout"
+        connectionType: INTERNET
+        payloadFormatVersion: "1.0"
+
+  /carrito/pedidos:
+    get:
+      summary: Historial de pedidos del usuario
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: GET
+        uri: "http://44.193.187.57:8082/api/carrito/pedidos"
+        connectionType: INTERNET
+        payloadFormatVersion: "1.0"
+
+  # =========================================================
+  #  Identidad  ->  EC2 #3 (Elastic IP) :8083  /api/auth
+  # =========================================================
+  /auth/health:
+    get:
+      summary: Health del microservicio de identidad (publico)
+      security: []
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: GET
+        uri: "http://35.170.38.245:8083/api/auth/health"
+        connectionType: INTERNET
+        payloadFormatVersion: "1.0"
+
+  /auth/me:
+    get:
+      summary: Perfil del usuario autenticado (registra el acceso)
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: GET
+        uri: "http://35.170.38.245:8083/api/auth/me"
+        connectionType: INTERNET
+        payloadFormatVersion: "1.0"
+
+  /auth/accesos:
+    get:
+      summary: Historial de accesos (propios; todos si ADMIN)
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: GET
+        uri: "http://35.170.38.245:8083/api/auth/accesos"
+        connectionType: INTERNET
+        payloadFormatVersion: "1.0"

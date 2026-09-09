@@ -1,0 +1,24 @@
+# EC2 #3 - IDENTIDAD (ms-auth)
+#
+#   PRODUCTOS_EC2_HOST=<ip-o-dns-de-la-ec2-de-productos> sudo -E docker compose up -d --build
+#
+# Se conecta a la MySQL que vive en la EC2 #1 (esquema auth_db).
+# Security Group de esta EC2: abrir 8083.
+
+services:
+  ms-auth:
+    build: ../../../ms-auth
+    container_name: pedidos360-ms-auth
+    restart: unless-stopped
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://${PRODUCTOS_EC2_HOST}:3307/auth_db
+      SPRING_DATASOURCE_USERNAME: pedidos
+      SPRING_DATASOURCE_PASSWORD: pedidos
+      AZURE_JWK_SET_URI: https://login.microsoftonline.com/e5372bf0-c5e3-4286-887c-79069f209c1f/discovery/v2.0/keys
+      AZURE_ISSUER: https://login.microsoftonline.com/e5372bf0-c5e3-4286-887c-79069f209c1f/v2.0
+      AZURE_AUDIENCE: api://ce3e5b61-0b01-4a67-a42b-f15ccb364024
+      SECURITY_CORS_ALLOWED_ORIGINS: ${FRONTEND_ORIGIN:-http://localhost:3000,http://localhost:3001}
+      APP_ROLES_ADMIN: ${APP_ROLES_ADMIN:-}
+      APP_ROLES_VENDEDOR: ${APP_ROLES_VENDEDOR:-}
+    ports:
+      - "8083:8080"
