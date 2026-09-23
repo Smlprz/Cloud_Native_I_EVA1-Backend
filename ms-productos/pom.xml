@@ -11,7 +11,7 @@
         <relativePath/>
     </parent>
 
-    <groupId>com.pedidos360</groupId>
+    <groupId>com.petshop</groupId>
     <artifactId>ms-productos</artifactId>
     <version>1.0.0</version>
     <name>Pedidos360 - Microservicio de Productos</name>

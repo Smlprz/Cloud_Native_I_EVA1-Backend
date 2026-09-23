@@ -90,5 +90,18 @@ services:
     ports:
       - "8083:8080"
 
+  ms-notificaciones:
+    build: ../ms-notificaciones
+    container_name: pedidos360-ms-notificaciones
+    restart: unless-stopped
+    environment:
+      # Cuenta Gmail que envia los correos + contrasena de aplicacion (16 caracteres,
+      # se genera en la cuenta de Google con verificacion en 2 pasos activada).
+      # Nunca hardcodear: se pasan como variables de entorno al levantar.
+      GMAIL_USERNAME: ${GMAIL_USERNAME:-}
+      GMAIL_APP_PASSWORD: ${GMAIL_APP_PASSWORD:-}
+    ports:
+      - "8084:8080"
+
 volumes:
   mysql_data:

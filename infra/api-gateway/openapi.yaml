@@ -36,9 +36,10 @@ components:
         jwtConfiguration:
           # issuer = https://login.microsoftonline.com/<TENANT_ID>/v2.0
           issuer: "https://login.microsoftonline.com/e5372bf0-c5e3-4286-887c-79069f209c1f/v2.0"
-          # audience = App ID URI de la API registrada en Azure
+          # audience = App ID URI o Client ID de la API (Azure v2 puede emitir cualquiera)
           audience:
             - "api://ce3e5b61-0b01-4a67-a42b-f15ccb364024"
+            - "ce3e5b61-0b01-4a67-a42b-f15ccb364024"
 
 # Por defecto toda ruta exige un JWT valido; el catalogo (GET) se marca publico.
 security:
@@ -84,8 +85,6 @@ paths:
         uri: "http://3.225.255.55:8081/api/productos/{id}"
         connectionType: INTERNET
         payloadFormatVersion: "1.0"
-        requestParameters:
-          "overwrite:path.id": "$request.path.id"
     put:
       summary: Actualizar producto
       x-amazon-apigateway-integration:
@@ -94,8 +93,6 @@ paths:
         uri: "http://3.225.255.55:8081/api/productos/{id}"
         connectionType: INTERNET
         payloadFormatVersion: "1.0"
-        requestParameters:
-          "overwrite:path.id": "$request.path.id"
     delete:
       summary: Eliminar producto (rol ADMIN)
       x-amazon-apigateway-integration:
@@ -104,8 +101,6 @@ paths:
         uri: "http://3.225.255.55:8081/api/productos/{id}"
         connectionType: INTERNET
         payloadFormatVersion: "1.0"
-        requestParameters:
-          "overwrite:path.id": "$request.path.id"
 
   # =========================================================
   #  Carrito / Pedidos  ->  EC2 :8082  /api/carrito   (todo protegido)
@@ -153,8 +148,6 @@ paths:
         uri: "http://44.193.187.57:8082/api/carrito/items/{itemId}"
         connectionType: INTERNET
         payloadFormatVersion: "1.0"
-        requestParameters:
-          "overwrite:path.itemId": "$request.path.itemId"
     delete:
       summary: Quitar un item del carrito
       x-amazon-apigateway-integration:
@@ -163,8 +156,6 @@ paths:
         uri: "http://44.193.187.57:8082/api/carrito/items/{itemId}"
         connectionType: INTERNET
         payloadFormatVersion: "1.0"
-        requestParameters:
-          "overwrite:path.itemId": "$request.path.itemId"
 
   /carrito/checkout:
     post:

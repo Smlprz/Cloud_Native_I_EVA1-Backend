@@ -1,0 +1,17 @@
+# EC2 #4 - NOTIFICACIONES (correo de confirmacion de pedido)
+#
+#   GMAIL_USERNAME=tu-correo@gmail.com GMAIL_APP_PASSWORD=xxxxxxxxxxxxxxxx sudo -E docker compose up -d --build
+#
+# No necesita base de datos ni conexion a las otras EC2: es stateless.
+# Security Group de esta EC2: abrir 8084.
+
+services:
+  ms-notificaciones:
+    build: ../../../ms-notificaciones
+    container_name: pedidos360-ms-notificaciones
+    restart: unless-stopped
+    environment:
+      GMAIL_USERNAME: ${GMAIL_USERNAME}
+      GMAIL_APP_PASSWORD: ${GMAIL_APP_PASSWORD}
+    ports:
+      - "8084:8080"

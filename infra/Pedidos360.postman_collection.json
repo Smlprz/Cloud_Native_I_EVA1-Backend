@@ -1,0 +1,82 @@
+{
+  "info": {
+    "name": "Pedidos360 - API Gateway (evidencias)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Pruebas contra el AWS API Gateway de Pedidos360. Muestra 401 sin token, 403 sin rol y 200/201 con token valido de Azure.\n\nVariables:\n- baseUrl: Invoke URL del gateway + /prod\n- token: access token de Azure (copiar desde el navegador: F12 -> Network -> cualquier peticion al gateway -> Request Headers -> Authorization: Bearer <esto>)"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "https://vo9q020skc.execute-api.us-east-1.amazonaws.com/prod" },
+    { "key": "token", "value": "PEGAR_ACCESS_TOKEN_DE_AZURE" }
+  ],
+  "item": [
+    {
+      "name": "01 - Catalogo (publico) -> 200",
+      "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/productos" }
+    },
+    {
+      "name": "02 - Producto por id (publico) -> 200",
+      "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/productos/1" }
+    },
+    {
+      "name": "03 - Health ms-auth (publico) -> 200",
+      "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/auth/health" }
+    },
+    {
+      "name": "04 - Carrito SIN token -> 401",
+      "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/carrito" }
+    },
+    {
+      "name": "05 - Crear producto SIN token -> 401",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"nombre\": \"Prueba\",\n  \"precio\": 1000,\n  \"stock\": 5\n}" },
+        "url": "{{baseUrl}}/productos"
+      }
+    },
+    {
+      "name": "06 - Carrito CON token -> 200",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+        "url": "{{baseUrl}}/carrito"
+      }
+    },
+    {
+      "name": "07 - Agregar al carrito CON token -> 200",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": { "mode": "raw", "raw": "{\n  \"productoId\": 1,\n  \"cantidad\": 1\n}" },
+        "url": "{{baseUrl}}/carrito/items"
+      }
+    },
+    {
+      "name": "08 - Checkout CON token -> 201",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+        "url": "{{baseUrl}}/carrito/checkout"
+      }
+    },
+    {
+      "name": "09 - Perfil /auth/me CON token -> 200 (muestra roles y scopes)",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+        "url": "{{baseUrl}}/auth/me"
+      }
+    },
+    {
+      "name": "10 - Eliminar producto CON token sin rol ADMIN -> 403",
+      "request": {
+        "method": "DELETE",
+        "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+        "url": "{{baseUrl}}/productos/1"
+      }
+    }
+  ]
+}
