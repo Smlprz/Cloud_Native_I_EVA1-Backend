@@ -90,11 +90,33 @@ services:
     ports:
       - "8083:8080"
 
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: pedidos360-rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-guest}
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
   ms-notificaciones:
     build: ../ms-notificaciones
     container_name: pedidos360-ms-notificaciones
     restart: unless-stopped
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
     environment:
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_USER:-guest}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-guest}
       # Cuenta Gmail que envia los correos + contrasena de aplicacion (16 caracteres,
       # se genera en la cuenta de Google con verificacion en 2 pasos activada).
       # Nunca hardcodear: se pasan como variables de entorno al levantar.

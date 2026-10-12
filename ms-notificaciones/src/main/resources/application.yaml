@@ -4,6 +4,19 @@ server:
 spring:
   application:
     name: ms-notificaciones
+  rabbitmq:
+    host: ${SPRING_RABBITMQ_HOST:localhost}
+    port: ${SPRING_RABBITMQ_PORT:5672}
+    username: ${SPRING_RABBITMQ_USERNAME:guest}
+    password: ${SPRING_RABBITMQ_PASSWORD:guest}
+    listener:
+      simple:
+        # Un mensaje que falla NO vuelve a la cola: tras los reintentos va a la DLQ.
+        default-requeue-rejected: false
+        retry:
+          enabled: true
+          max-attempts: 3
+          initial-interval: 2s
   mail:
     host: smtp.gmail.com
     port: 587
