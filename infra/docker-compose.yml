@@ -65,6 +65,7 @@ services:
       SPRING_DATASOURCE_USERNAME: pedidos
       SPRING_DATASOURCE_PASSWORD: pedidos
       SERVICES_PRODUCTOS_BASE_URL: http://ms-productos:8080
+      SERVICES_ORDENES_BASE_URL: http://ms-orden:8080
       AZURE_JWK_SET_URI: ${AZURE_JWK_SET_URI:-https://login.microsoftonline.com/e5372bf0-c5e3-4286-887c-79069f209c1f/discovery/v2.0/keys}
       AZURE_ISSUER: ${AZURE_ISSUER:-https://login.microsoftonline.com/e5372bf0-c5e3-4286-887c-79069f209c1f/v2.0}
       AZURE_AUDIENCE: ${AZURE_AUDIENCE:-api://ce3e5b61-0b01-4a67-a42b-f15ccb364024}
@@ -105,6 +106,29 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
+
+  ms-orden:
+    build: ../ms-orden
+    container_name: pedidos360-ms-orden
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/orden_db
+      SPRING_DATASOURCE_USERNAME: pedidos
+      SPRING_DATASOURCE_PASSWORD: pedidos
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_USER:-guest}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-guest}
+      AZURE_JWK_SET_URI: ${AZURE_JWK_SET_URI:-https://login.microsoftonline.com/e5372bf0-c5e3-4286-887c-79069f209c1f/discovery/v2.0/keys}
+      AZURE_ISSUER: ${AZURE_ISSUER:-https://login.microsoftonline.com/e5372bf0-c5e3-4286-887c-79069f209c1f/v2.0}
+      AZURE_AUDIENCE: ${AZURE_AUDIENCE:-api://ce3e5b61-0b01-4a67-a42b-f15ccb364024}
+      SECURITY_CORS_ALLOWED_ORIGINS: ${FRONTEND_ORIGIN:-http://localhost:3000,http://localhost:3001}
+    ports:
+      - "8085:8080"
 
   ms-notificaciones:
     build: ../ms-notificaciones

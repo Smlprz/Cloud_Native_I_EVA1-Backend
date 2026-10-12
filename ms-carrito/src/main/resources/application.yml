@@ -29,9 +29,9 @@ spring:
 services:
   productos:
     base-url: ${SERVICES_PRODUCTOS_BASE_URL:http://localhost:8081}
-  # Vacio = no se envian correos (la compra funciona igual).
-  notificaciones:
-    base-url: ${SERVICES_NOTIFICACIONES_BASE_URL:}
+  # Vacio = no se registra la orden en ms-orden (la compra funciona igual).
+  ordenes:
+    base-url: ${SERVICES_ORDENES_BASE_URL:}
 
 # Parametros del IDaaS (Azure AD / Microsoft Entra ID). Ver docs/AZURE-AD-SETUP.md.
 azure:

@@ -18,8 +18,8 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 /**
- * API privada de ordenes. Exige JWT de Azure AD con scope ordenes.read / ordenes.write
- * (estos scopes hay que crearlos en el App Registration de la API).
+ * API privada de ordenes. Exige JWT de Azure AD (app pedidos360-api) con scope ordenes.read / ordenes.write,
+ * o los equivalentes carrito.read / carrito.write, para que ms-carrito reenvie el token del usuario.
  */
 @RestController
 @RequestMapping("/api/ordenes")
@@ -32,15 +32,15 @@ public class OrdenController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAuthority('SCOPE_ordenes.read') and hasAnyRole('CLIENTE','ADMIN')")
+    @PreAuthorize("hasAnyAuthority('SCOPE_ordenes.read','SCOPE_carrito.read') and hasAnyRole('CLIENTE','ADMIN')")
     public List<OrdenResponse> listar(@AuthenticationPrincipal Jwt jwt) {
         return service.listar(UsuarioActual.id(jwt));
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAuthority('SCOPE_ordenes.write') and hasAnyRole('CLIENTE','ADMIN')")
+    @PreAuthorize("hasAnyAuthority('SCOPE_ordenes.write','SCOPE_carrito.write') and hasAnyRole('CLIENTE','ADMIN')")
     public OrdenResponse crear(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody OrdenRequest request) {
-        return service.crear(UsuarioActual.id(jwt), request.total());
+        return service.crear(UsuarioActual.id(jwt), UsuarioActual.email(jwt), request.total());
     }
 }

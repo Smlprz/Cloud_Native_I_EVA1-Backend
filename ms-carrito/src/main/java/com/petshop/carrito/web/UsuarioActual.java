@@ -12,12 +12,4 @@ final class UsuarioActual {
         String oid = jwt.getClaimAsString("oid");
         return oid != null ? oid : jwt.getSubject();
     }
-
-    static String email(Jwt jwt) {
-        String email = jwt.getClaimAsString("email");
-        if (email == null) {
-            email = jwt.getClaimAsString("preferred_username");
-        }
-        return email != null && email.contains("@") ? email : null;
-    }
 }

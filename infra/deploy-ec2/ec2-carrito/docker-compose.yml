@@ -2,7 +2,7 @@
 #
 #   PRODUCTOS_EC2_HOST=<ip-o-dns-de-la-ec2-de-productos> sudo -E docker compose up -d --build
 #
-# Opcional: NOTIFICACIONES_URL=http://<ip-ec2-notificaciones>:8084 activa el correo de confirmacion.
+# Opcional: ORDENES_URL=http://<ip-ec2-orden>:8085 registra cada compra en ms-orden (que publica en RabbitMQ).
 # Se conecta a la MySQL y a la API de productos que viven en la EC2 #1.
 # Security Group de esta EC2: abrir 8082.
 
@@ -16,7 +16,7 @@ services:
       SPRING_DATASOURCE_USERNAME: pedidos
       SPRING_DATASOURCE_PASSWORD: pedidos
       SERVICES_PRODUCTOS_BASE_URL: http://${PRODUCTOS_EC2_HOST}:8081
-      SERVICES_NOTIFICACIONES_BASE_URL: ${NOTIFICACIONES_URL:-}
+      SERVICES_ORDENES_BASE_URL: ${ORDENES_URL:-}
       AZURE_JWK_SET_URI: https://login.microsoftonline.com/e5372bf0-c5e3-4286-887c-79069f209c1f/discovery/v2.0/keys
       AZURE_ISSUER: https://login.microsoftonline.com/e5372bf0-c5e3-4286-887c-79069f209c1f/v2.0
       AZURE_AUDIENCE: api://ce3e5b61-0b01-4a67-a42b-f15ccb364024

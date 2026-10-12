@@ -1,0 +1,24 @@
+# EC2 - RABBITMQ (broker de mensajes)
+#
+#   RABBITMQ_USER=<usuario> RABBITMQ_PASSWORD=<clave> sudo -E docker compose up -d
+#
+# Guardar usuario y clave en un .env junto a este archivo (no se sube al repo).
+# Security Group de esta EC2: 22, 5672 (solo desde las EC2 de orden y notificaciones)
+# y 15672 (panel web, solo desde tu IP).
+
+services:
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: pedidos360-rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-guest}
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
+volumes:
+  rabbitmq_data:

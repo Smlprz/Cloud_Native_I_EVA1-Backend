@@ -11,6 +11,9 @@ services:
     container_name: pedidos360-ms-notificaciones
     restart: unless-stopped
     environment:
+      SPRING_RABBITMQ_HOST: ${RABBITMQ_EC2_HOST:-localhost}
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_USER:-guest}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-guest}
       GMAIL_USERNAME: ${GMAIL_USERNAME}
       GMAIL_APP_PASSWORD: ${GMAIL_APP_PASSWORD}
     ports:

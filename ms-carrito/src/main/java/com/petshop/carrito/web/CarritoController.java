@@ -1,6 +1,6 @@
 package com.petshop.carrito.web;
 
-import com.petshop.carrito.client.NotificacionesClient;
+import com.petshop.carrito.client.OrdenesClient;
 import com.petshop.carrito.service.CarritoService;
 import com.petshop.carrito.web.dto.ActualizarItemRequest;
 import com.petshop.carrito.web.dto.AgregarItemRequest;
@@ -35,11 +35,11 @@ import java.util.List;
 public class CarritoController {
 
     private final CarritoService service;
-    private final NotificacionesClient notificaciones;
+    private final OrdenesClient ordenes;
 
-    public CarritoController(CarritoService service, NotificacionesClient notificaciones) {
+    public CarritoController(CarritoService service, OrdenesClient ordenes) {
         this.service = service;
-        this.notificaciones = notificaciones;
+        this.ordenes = ordenes;
     }
 
     @GetMapping
@@ -83,7 +83,7 @@ public class CarritoController {
     @PreAuthorize("hasAuthority('SCOPE_carrito.write') and hasAnyRole('CLIENTE','ADMIN')")
     public PedidoResponse checkout(@AuthenticationPrincipal Jwt jwt) {
         PedidoResponse pedido = service.checkout(UsuarioActual.id(jwt));
-        notificaciones.enviarConfirmacionPedido(UsuarioActual.email(jwt), pedido);
+        ordenes.registrarOrden(jwt.getTokenValue(), pedido);
         return pedido;
     }
 

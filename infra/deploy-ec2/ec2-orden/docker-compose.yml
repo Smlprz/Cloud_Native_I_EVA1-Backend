@@ -1,6 +1,6 @@
 # EC2 - ORDENES (ms-orden)
 #
-#   PRODUCTOS_EC2_HOST=<ip-o-dns-de-la-ec2-de-productos> sudo -E docker compose up -d --build
+#   PRODUCTOS_EC2_HOST=<ip-ec2-productos> RABBITMQ_EC2_HOST=<ip-ec2-rabbitmq> sudo -E docker compose up -d --build
 #
 # Se conecta a la MySQL que vive en la EC2 de productos (esquema orden_db).
 # Antes de levantarlo, crear el esquema en esa MySQL (ver README de ms-orden).
@@ -15,6 +15,9 @@ services:
       SPRING_DATASOURCE_URL: jdbc:mysql://${PRODUCTOS_EC2_HOST}:3307/orden_db
       SPRING_DATASOURCE_USERNAME: pedidos
       SPRING_DATASOURCE_PASSWORD: pedidos
+      SPRING_RABBITMQ_HOST: ${RABBITMQ_EC2_HOST:-localhost}
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_USER:-guest}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-guest}
       AZURE_JWK_SET_URI: https://login.microsoftonline.com/e5372bf0-c5e3-4286-887c-79069f209c1f/discovery/v2.0/keys
       AZURE_ISSUER: https://login.microsoftonline.com/e5372bf0-c5e3-4286-887c-79069f209c1f/v2.0
       AZURE_AUDIENCE: api://ce3e5b61-0b01-4a67-a42b-f15ccb364024
