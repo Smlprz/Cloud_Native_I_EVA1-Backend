@@ -1,0 +1,38 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: ms-rabbit-admin
+
+  rabbitmq:
+    host: ${SPRING_RABBITMQ_HOST:localhost}
+    port: ${SPRING_RABBITMQ_PORT:5672}
+    username: ${SPRING_RABBITMQ_USERNAME:guest}
+    password: ${SPRING_RABBITMQ_PASSWORD:guest}
+
+
+# Parametros del IDaaS (Azure AD / Microsoft Entra ID). Ver docs/AZURE-AD-SETUP.md.
+azure:
+  jwk-set-uri: ${AZURE_JWK_SET_URI:https://login.microsoftonline.com/REEMPLAZAR_TENANT_ID/discovery/v2.0/keys}
+  issuer: ${AZURE_ISSUER:https://login.microsoftonline.com/REEMPLAZAR_TENANT_ID/v2.0}
+  audience: ${AZURE_AUDIENCE:api://REEMPLAZAR_CLIENT_ID}
+
+security:
+  cors:
+    allowed-origins: ${SECURITY_CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:3001}
+
+app:
+  roles:
+    admin: ${APP_ROLES_ADMIN:}
+    vendedor: ${APP_ROLES_VENDEDOR:}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true

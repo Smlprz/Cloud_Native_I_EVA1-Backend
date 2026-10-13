@@ -1,6 +1,7 @@
 package com.petshop.email.web;
 
 import com.petshop.email.service.EmailService;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -17,6 +18,7 @@ public class EmailController {
     }
 
     @PostMapping("/enviar")
+    @PreAuthorize("hasRole('ADMIN')")
     public String enviarCorreoPrueba(@RequestParam String to,
                                      @RequestParam String subject,
                                      @RequestParam String body) {

@@ -1,0 +1,71 @@
+{
+  "info": {
+    "name": "Pedidos360 - Flujo de compra (automatico)",
+    "description": "Ejecutar con Runner. Variables de coleccion: base (URL del gateway) y token (JWT de Azure AD pedido desde Postman). Cada paso valida su resultado.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+  },
+  "variable": [
+    { "key": "base", "value": "https://vo9q020skc.execute-api.us-east-1.amazonaws.com/prod" },
+    { "key": "token", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "0. Sin token devuelve 401",
+      "request": {
+        "auth": { "type": "noauth" },
+        "method": "GET",
+        "url": "{{base}}/carrito"
+      },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('Sin token responde 401', function () { pm.response.to.have.status(401); });"
+      ] } }]
+    },
+    {
+      "name": "1. Listar productos (200)",
+      "request": { "method": "GET", "url": "{{base}}/productos" },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('Responde 200', function () { pm.response.to.have.status(200); });",
+        "var data = pm.response.json();",
+        "var lista = Array.isArray(data) ? data : (data.content || []);",
+        "pm.test('Hay al menos un producto', function () { pm.expect(lista.length).to.be.above(0); });",
+        "if (lista.length) { pm.collectionVariables.set('productoId', lista[0].id); }"
+      ] } }]
+    },
+    {
+      "name": "2. Agregar al carrito (201)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\"productoId\": {{productoId}}, \"cantidad\": 1}" },
+        "url": "{{base}}/carrito/items"
+      },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('Responde 201', function () { pm.response.to.have.status(201); });"
+      ] } }]
+    },
+    {
+      "name": "3. Checkout (201)",
+      "request": { "method": "POST", "url": "{{base}}/carrito/checkout" },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('Responde 201', function () { pm.response.to.have.status(201); });",
+        "var pedido = pm.response.json();",
+        "pm.test('El pedido tiene id y total', function () { pm.expect(pedido.id).to.exist; pm.expect(pedido.total).to.exist; });",
+        "pm.collectionVariables.set('pedidoId', pedido.id);"
+      ] } }]
+    },
+    {
+      "name": "4. El pedido aparece en el historial (200)",
+      "request": { "method": "GET", "url": "{{base}}/carrito/pedidos" },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('Responde 200', function () { pm.response.to.have.status(200); });",
+        "var id = pm.collectionVariables.get('pedidoId');",
+        "var pedidos = pm.response.json();",
+        "pm.test('Contiene el pedido recien creado', function () { pm.expect(pedidos.some(function (p) { return p.id == id; })).to.be.true; });"
+      ] } }]
+    }
+  ]
+}

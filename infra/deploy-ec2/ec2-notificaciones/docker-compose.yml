@@ -14,6 +14,10 @@ services:
       SPRING_RABBITMQ_HOST: ${RABBITMQ_EC2_HOST:-localhost}
       SPRING_RABBITMQ_USERNAME: ${RABBITMQ_USER:-guest}
       SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-guest}
+      AZURE_JWK_SET_URI: https://login.microsoftonline.com/e5372bf0-c5e3-4286-887c-79069f209c1f/discovery/v2.0/keys
+      AZURE_ISSUER: https://login.microsoftonline.com/e5372bf0-c5e3-4286-887c-79069f209c1f/v2.0
+      AZURE_AUDIENCE: api://ce3e5b61-0b01-4a67-a42b-f15ccb364024
+      APP_ROLES_ADMIN: ${APP_ROLES_ADMIN:-}
       GMAIL_USERNAME: ${GMAIL_USERNAME}
       GMAIL_APP_PASSWORD: ${GMAIL_APP_PASSWORD}
     ports:

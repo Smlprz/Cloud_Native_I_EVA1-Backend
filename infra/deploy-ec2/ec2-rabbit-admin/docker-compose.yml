@@ -1,0 +1,23 @@
+# EC2 - ADMINISTRADOR DE RABBITMQ (ms-rabbit-admin)
+#
+#   RABBITMQ_EC2_HOST=<ip-ec2-rabbitmq> APP_ROLES_ADMIN=<correo-admin> sudo -E docker compose up -d --build
+#
+# No usa base de datos. Se conecta al broker de la EC2 de RabbitMQ.
+# Security Group de esta EC2: abrir 8087.
+
+services:
+  ms-rabbit-admin:
+    build: ../../../ms-rabbit-admin
+    container_name: pedidos360-ms-rabbit-admin
+    restart: unless-stopped
+    environment:
+      SPRING_RABBITMQ_HOST: ${RABBITMQ_EC2_HOST}
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_USER:-guest}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-guest}
+      AZURE_JWK_SET_URI: https://login.microsoftonline.com/e5372bf0-c5e3-4286-887c-79069f209c1f/discovery/v2.0/keys
+      AZURE_ISSUER: https://login.microsoftonline.com/e5372bf0-c5e3-4286-887c-79069f209c1f/v2.0
+      AZURE_AUDIENCE: api://ce3e5b61-0b01-4a67-a42b-f15ccb364024
+      SECURITY_CORS_ALLOWED_ORIGINS: ${FRONTEND_ORIGIN:-http://localhost:3000,http://localhost:3001}
+      APP_ROLES_ADMIN: ${APP_ROLES_ADMIN:-}
+    ports:
+      - "8087:8080"

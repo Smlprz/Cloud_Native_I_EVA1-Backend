@@ -178,6 +178,64 @@ paths:
         payloadFormatVersion: "1.0"
 
   # =========================================================
+  #  Ordenes  ->  EC2 :8085  /api/ordenes   (todo protegido)
+  # =========================================================
+  /ordenes:
+    get:
+      summary: Listar las ordenes del usuario
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: GET
+        uri: "http://54.89.45.189:8085/api/ordenes"
+        connectionType: INTERNET
+        payloadFormatVersion: "1.0"
+    post:
+      summary: Crear una orden (publica el evento en RabbitMQ)
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: POST
+        uri: "http://54.89.45.189:8085/api/ordenes"
+        connectionType: INTERNET
+        payloadFormatVersion: "1.0"
+
+  # =========================================================
+  #  Resenas  ->  EC2 :8086  /api/resenas   (todo protegido)
+  # =========================================================
+  /resenas:
+    get:
+      summary: Listar las resenas de un producto (?productoId=)
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: GET
+        uri: "http://100.48.3.123:8086/api/resenas"
+        connectionType: INTERNET
+        payloadFormatVersion: "1.0"
+    post:
+      summary: Crear una resena
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: POST
+        uri: "http://100.48.3.123:8086/api/resenas"
+        connectionType: INTERNET
+        payloadFormatVersion: "1.0"
+
+  /resenas/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    delete:
+      summary: Borrar una resena propia
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: DELETE
+        uri: "http://100.48.3.123:8086/api/resenas/{id}"
+        connectionType: INTERNET
+        payloadFormatVersion: "1.0"
+
+  # =========================================================
   #  Identidad  ->  EC2 #3 (Elastic IP) :8083  /api/auth
   # =========================================================
   /auth/health:
