@@ -236,6 +236,87 @@ paths:
         payloadFormatVersion: "1.0"
 
   # =========================================================
+  #  Administrador de RabbitMQ  ->  EC2 :8087  /api/rabbit   (solo ADMIN, validado en el microservicio)
+  # =========================================================
+  /rabbit/exchanges:
+    post:
+      summary: Crear un exchange
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: POST
+        uri: "http://34.235.89.235:8087/api/rabbit/exchanges"
+        connectionType: INTERNET
+        payloadFormatVersion: "1.0"
+
+  /rabbit/exchanges/{name}:
+    parameters:
+      - name: name
+        in: path
+        required: true
+        schema:
+          type: string
+    delete:
+      summary: Eliminar un exchange
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: DELETE
+        uri: "http://34.235.89.235:8087/api/rabbit/exchanges/{name}"
+        connectionType: INTERNET
+        payloadFormatVersion: "1.0"
+
+  /rabbit/queues:
+    post:
+      summary: Crear una cola (opcional con DLQ)
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: POST
+        uri: "http://34.235.89.235:8087/api/rabbit/queues"
+        connectionType: INTERNET
+        payloadFormatVersion: "1.0"
+
+  /rabbit/queues/{name}:
+    parameters:
+      - name: name
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: Ver mensajes y consumidores de una cola
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: GET
+        uri: "http://34.235.89.235:8087/api/rabbit/queues/{name}"
+        connectionType: INTERNET
+        payloadFormatVersion: "1.0"
+    delete:
+      summary: Eliminar una cola
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: DELETE
+        uri: "http://34.235.89.235:8087/api/rabbit/queues/{name}"
+        connectionType: INTERNET
+        payloadFormatVersion: "1.0"
+
+  /rabbit/bindings:
+    post:
+      summary: Crear un binding cola-exchange
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: POST
+        uri: "http://34.235.89.235:8087/api/rabbit/bindings"
+        connectionType: INTERNET
+        payloadFormatVersion: "1.0"
+    delete:
+      summary: Eliminar un binding cola-exchange
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: DELETE
+        uri: "http://34.235.89.235:8087/api/rabbit/bindings"
+        connectionType: INTERNET
+        payloadFormatVersion: "1.0"
+
+  # =========================================================
   #  Identidad  ->  EC2 #3 (Elastic IP) :8083  /api/auth
   # =========================================================
   /auth/health:
