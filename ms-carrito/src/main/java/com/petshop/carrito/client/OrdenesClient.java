@@ -10,7 +10,7 @@ import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
-import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -36,17 +36,22 @@ public class OrdenesClient {
         this.restClient = RestClient.builder().baseUrl(baseUrl).requestFactory(factory).build();
     }
 
-    public void registrarOrden(String bearerToken, PedidoResponse pedido) {
+    /** email: opcional. Si viene, ms-orden envia el comprobante a esa direccion. */
+    public void registrarOrden(String bearerToken, PedidoResponse pedido, String email) {
         if (restClient == null) {
             return;
         }
         try {
-            BigDecimal total = pedido.total();
+            Map<String, Object> cuerpo = new HashMap<>();
+            cuerpo.put("total", pedido.total());
+            if (email != null && !email.isBlank()) {
+                cuerpo.put("email", email.trim());
+            }
             restClient.post()
                     .uri("/api/ordenes")
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + bearerToken)
-                    .body(Map.of("total", total))
+                    .body(cuerpo)
                     .retrieve()
                     .toBodilessEntity();
         } catch (Exception e) {

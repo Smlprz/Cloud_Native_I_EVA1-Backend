@@ -5,6 +5,7 @@ import com.petshop.carrito.service.CarritoService;
 import com.petshop.carrito.web.dto.ActualizarItemRequest;
 import com.petshop.carrito.web.dto.AgregarItemRequest;
 import com.petshop.carrito.web.dto.CarritoResponse;
+import com.petshop.carrito.web.dto.CheckoutRequest;
 import com.petshop.carrito.web.dto.PedidoResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -81,9 +82,10 @@ public class CarritoController {
     @PostMapping("/checkout")
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAuthority('SCOPE_carrito.write') and hasAnyRole('CLIENTE','ADMIN')")
-    public PedidoResponse checkout(@AuthenticationPrincipal Jwt jwt) {
+    public PedidoResponse checkout(@AuthenticationPrincipal Jwt jwt,
+                                   @Valid @RequestBody(required = false) CheckoutRequest request) {
         PedidoResponse pedido = service.checkout(UsuarioActual.id(jwt));
-        ordenes.registrarOrden(jwt.getTokenValue(), pedido);
+        ordenes.registrarOrden(jwt.getTokenValue(), pedido, request != null ? request.email() : null);
         return pedido;
     }
 

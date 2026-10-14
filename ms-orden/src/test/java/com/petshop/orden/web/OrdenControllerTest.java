@@ -60,6 +60,56 @@ class OrdenControllerTest {
     }
 
     @Test
+    void elCorreoIndicadoEnLaPeticionTienePrioridadSobreElDelToken() throws Exception {
+        var auth = jwt().jwt(j -> j.claim("email", "token@correo.cl")).authorities(
+                new SimpleGrantedAuthority("SCOPE_ordenes.write"),
+                new SimpleGrantedAuthority("ROLE_CLIENTE"));
+
+        mvc.perform(post("/api/ordenes").with(auth)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"total\": 500, \"email\": \"comprobante@destino.cl\"}"))
+                .andExpect(status().isCreated());
+
+        var captor = org.mockito.ArgumentCaptor.forClass(com.petshop.orden.messaging.OrdenCreadaEvent.class);
+        org.mockito.Mockito.verify(rabbitTemplate, org.mockito.Mockito.atLeastOnce()).convertAndSend(
+                org.mockito.ArgumentMatchers.eq("pedidos.exchange"),
+                org.mockito.ArgumentMatchers.eq("orden.creada"),
+                captor.capture());
+        org.junit.jupiter.api.Assertions.assertEquals("comprobante@destino.cl", captor.getValue().email());
+    }
+
+    @Test
+    void sinCorreoEnLaPeticionUsaElDelToken() throws Exception {
+        var auth = jwt().jwt(j -> j.claim("email", "token@correo.cl")).authorities(
+                new SimpleGrantedAuthority("SCOPE_ordenes.write"),
+                new SimpleGrantedAuthority("ROLE_CLIENTE"));
+
+        mvc.perform(post("/api/ordenes").with(auth)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"total\": 700}"))
+                .andExpect(status().isCreated());
+
+        var captor = org.mockito.ArgumentCaptor.forClass(com.petshop.orden.messaging.OrdenCreadaEvent.class);
+        org.mockito.Mockito.verify(rabbitTemplate, org.mockito.Mockito.atLeastOnce()).convertAndSend(
+                org.mockito.ArgumentMatchers.eq("pedidos.exchange"),
+                org.mockito.ArgumentMatchers.eq("orden.creada"),
+                captor.capture());
+        org.junit.jupiter.api.Assertions.assertEquals("token@correo.cl", captor.getValue().email());
+    }
+
+    @Test
+    void unCorreoInvalidoDevuelve400() throws Exception {
+        var auth = jwt().authorities(
+                new SimpleGrantedAuthority("SCOPE_ordenes.write"),
+                new SimpleGrantedAuthority("ROLE_CLIENTE"));
+
+        mvc.perform(post("/api/ordenes").with(auth)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"total\": 700, \"email\": \"esto-no-es-un-correo\"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void tokenConScopesDeCarritoTambienPuedeCrearOrdenes() throws Exception {
         var auth = jwt().authorities(
                 new SimpleGrantedAuthority("SCOPE_carrito.write"),

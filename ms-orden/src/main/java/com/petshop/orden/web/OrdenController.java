@@ -41,6 +41,9 @@ public class OrdenController {
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAnyAuthority('SCOPE_ordenes.write','SCOPE_carrito.write') and hasAnyRole('CLIENTE','ADMIN')")
     public OrdenResponse crear(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody OrdenRequest request) {
-        return service.crear(UsuarioActual.id(jwt), UsuarioActual.email(jwt), request.total());
+        String destino = request.email() != null && !request.email().isBlank()
+                ? request.email().trim()
+                : UsuarioActual.email(jwt);
+        return service.crear(UsuarioActual.id(jwt), destino, request.total());
     }
 }
