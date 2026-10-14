@@ -12,6 +12,7 @@ x-amazon-apigateway-cors:
   allowOrigins:
     - "http://localhost:3000"      # frontend en desarrollo (CRA)
     - "http://localhost:4200"      # alternativa (Angular)
+    - "https://100-60-217-178.sslip.io"   # frontend desplegado en la EC2 (Caddy + HTTPS)
     # - "https://pedidos360.midominio.com"   # dominio real cuando exista
   allowMethods:
     - GET

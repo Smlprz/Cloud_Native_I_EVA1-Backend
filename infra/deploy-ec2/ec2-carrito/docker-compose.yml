@@ -20,7 +20,7 @@ services:
       AZURE_JWK_SET_URI: https://login.microsoftonline.com/e5372bf0-c5e3-4286-887c-79069f209c1f/discovery/v2.0/keys
       AZURE_ISSUER: https://login.microsoftonline.com/e5372bf0-c5e3-4286-887c-79069f209c1f/v2.0
       AZURE_AUDIENCE: api://ce3e5b61-0b01-4a67-a42b-f15ccb364024
-      SECURITY_CORS_ALLOWED_ORIGINS: ${FRONTEND_ORIGIN:-http://localhost:3000,http://localhost:3001}
+      SECURITY_CORS_ALLOWED_ORIGINS: ${FRONTEND_ORIGIN:-http://localhost:3000,http://localhost:3001,https://100-60-217-178.sslip.io}
       APP_ROLES_ADMIN: ${APP_ROLES_ADMIN:-}
       APP_ROLES_VENDEDOR: ${APP_ROLES_VENDEDOR:-}
     ports:

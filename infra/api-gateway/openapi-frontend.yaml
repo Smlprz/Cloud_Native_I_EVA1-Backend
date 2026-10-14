@@ -1,0 +1,285 @@
+# =============================================================================
+# API GATEWAY DEL FRONTEND (separado del gateway del backend)
+#   - Solo expone las rutas que usa la web.
+#   - Mismo JWT Authorizer de Azure AD (issuer + audience).
+#   - CORS: solo el origen del frontend. Agregar aqui la direccion HTTPS del frontend
+#     desplegado (por ejemplo https://34-200-1-1.sslip.io) y volver a importar.
+#   - Crear como NUEVO HTTP API (Create API -> HTTP API -> Import). No reemplaza al gateway
+#     del backend (infra/api-gateway/openapi.yaml).
+# =============================================================================
+openapi: 3.0.1
+info:
+  title: pedidos360-frontend-api
+  description: AWS API Gateway (HTTP API) DEDICADO AL FRONTEND de Pedidos360. Expone solo las rutas que usa la web y valida
+    el JWT de Azure AD en el borde. Es independiente del gateway del backend (pedidos360-api).
+  version: 1.0.0
+x-amazon-apigateway-cors:
+  allowOrigins:
+  - http://localhost:3000
+  - https://100-60-217-178.sslip.io
+  allowMethods:
+  - GET
+  - POST
+  - PUT
+  - DELETE
+  - OPTIONS
+  allowHeaders:
+  - Authorization
+  - Content-Type
+  maxAge: 3600
+components:
+  securitySchemes:
+    azureJwt:
+      type: oauth2
+      flows: {}
+      x-amazon-apigateway-authorizer:
+        type: jwt
+        identitySource: $request.header.Authorization
+        jwtConfiguration:
+          issuer: https://login.microsoftonline.com/e5372bf0-c5e3-4286-887c-79069f209c1f/v2.0
+          audience:
+          - api://ce3e5b61-0b01-4a67-a42b-f15ccb364024
+          - ce3e5b61-0b01-4a67-a42b-f15ccb364024
+security:
+- azureJwt: []
+paths:
+  /productos:
+    get:
+      summary: Listar catalogo (publico)
+      security: []
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: GET
+        uri: http://3.225.255.55:8081/api/productos
+        connectionType: INTERNET
+        payloadFormatVersion: '1.0'
+    post:
+      summary: Crear producto (scope productos.write + rol VENDEDOR/ADMIN, validado en el microservicio)
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: POST
+        uri: http://3.225.255.55:8081/api/productos
+        connectionType: INTERNET
+        payloadFormatVersion: '1.0'
+  /productos/{id}:
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+    get:
+      summary: Detalle de producto (publico)
+      security: []
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: GET
+        uri: http://3.225.255.55:8081/api/productos/{id}
+        connectionType: INTERNET
+        payloadFormatVersion: '1.0'
+    put:
+      summary: Actualizar producto
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: PUT
+        uri: http://3.225.255.55:8081/api/productos/{id}
+        connectionType: INTERNET
+        payloadFormatVersion: '1.0'
+    delete:
+      summary: Eliminar producto (rol ADMIN)
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: DELETE
+        uri: http://3.225.255.55:8081/api/productos/{id}
+        connectionType: INTERNET
+        payloadFormatVersion: '1.0'
+  /carrito:
+    get:
+      summary: Ver el carrito del usuario
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: GET
+        uri: http://44.193.187.57:8082/api/carrito
+        connectionType: INTERNET
+        payloadFormatVersion: '1.0'
+    delete:
+      summary: Vaciar el carrito
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: DELETE
+        uri: http://44.193.187.57:8082/api/carrito
+        connectionType: INTERNET
+        payloadFormatVersion: '1.0'
+  /carrito/items:
+    post:
+      summary: Agregar item al carrito
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: POST
+        uri: http://44.193.187.57:8082/api/carrito/items
+        connectionType: INTERNET
+        payloadFormatVersion: '1.0'
+  /carrito/items/{itemId}:
+    parameters:
+    - name: itemId
+      in: path
+      required: true
+      schema:
+        type: string
+    put:
+      summary: Cambiar la cantidad de un item
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: PUT
+        uri: http://44.193.187.57:8082/api/carrito/items/{itemId}
+        connectionType: INTERNET
+        payloadFormatVersion: '1.0'
+    delete:
+      summary: Quitar un item del carrito
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: DELETE
+        uri: http://44.193.187.57:8082/api/carrito/items/{itemId}
+        connectionType: INTERNET
+        payloadFormatVersion: '1.0'
+  /carrito/checkout:
+    post:
+      summary: Confirmar el pedido
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: POST
+        uri: http://44.193.187.57:8082/api/carrito/checkout
+        connectionType: INTERNET
+        payloadFormatVersion: '1.0'
+  /carrito/pedidos:
+    get:
+      summary: Historial de pedidos del usuario
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: GET
+        uri: http://44.193.187.57:8082/api/carrito/pedidos
+        connectionType: INTERNET
+        payloadFormatVersion: '1.0'
+  /ordenes:
+    get:
+      summary: Listar las ordenes del usuario
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: GET
+        uri: http://54.89.45.189:8085/api/ordenes
+        connectionType: INTERNET
+        payloadFormatVersion: '1.0'
+  /resenas:
+    get:
+      summary: Listar las resenas de un producto (?productoId=)
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: GET
+        uri: http://100.48.3.123:8086/api/resenas
+        connectionType: INTERNET
+        payloadFormatVersion: '1.0'
+    post:
+      summary: Crear una resena
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: POST
+        uri: http://100.48.3.123:8086/api/resenas
+        connectionType: INTERNET
+        payloadFormatVersion: '1.0'
+  /resenas/{id}:
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+    delete:
+      summary: Borrar una resena propia
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: DELETE
+        uri: http://100.48.3.123:8086/api/resenas/{id}
+        connectionType: INTERNET
+        payloadFormatVersion: '1.0'
+  /auth/me:
+    get:
+      summary: Perfil del usuario autenticado (registra el acceso)
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: GET
+        uri: http://35.170.38.245:8083/api/auth/me
+        connectionType: INTERNET
+        payloadFormatVersion: '1.0'
+  /rabbit/exchanges:
+    post:
+      summary: Crear un exchange
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: POST
+        uri: http://34.235.89.235:8087/api/rabbit/exchanges
+        connectionType: INTERNET
+        payloadFormatVersion: '1.0'
+  /rabbit/exchanges/{name}:
+    parameters:
+    - name: name
+      in: path
+      required: true
+      schema:
+        type: string
+    delete:
+      summary: Eliminar un exchange
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: DELETE
+        uri: http://34.235.89.235:8087/api/rabbit/exchanges/{name}
+        connectionType: INTERNET
+        payloadFormatVersion: '1.0'
+  /rabbit/queues:
+    post:
+      summary: Crear una cola (opcional con DLQ)
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: POST
+        uri: http://34.235.89.235:8087/api/rabbit/queues
+        connectionType: INTERNET
+        payloadFormatVersion: '1.0'
+  /rabbit/queues/{name}:
+    parameters:
+    - name: name
+      in: path
+      required: true
+      schema:
+        type: string
+    get:
+      summary: Ver mensajes y consumidores de una cola
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: GET
+        uri: http://34.235.89.235:8087/api/rabbit/queues/{name}
+        connectionType: INTERNET
+        payloadFormatVersion: '1.0'
+    delete:
+      summary: Eliminar una cola
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: DELETE
+        uri: http://34.235.89.235:8087/api/rabbit/queues/{name}
+        connectionType: INTERNET
+        payloadFormatVersion: '1.0'
+  /rabbit/bindings:
+    post:
+      summary: Crear un binding cola-exchange
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: POST
+        uri: http://34.235.89.235:8087/api/rabbit/bindings
+        connectionType: INTERNET
+        payloadFormatVersion: '1.0'
+    delete:
+      summary: Eliminar un binding cola-exchange
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: DELETE
+        uri: http://34.235.89.235:8087/api/rabbit/bindings
+        connectionType: INTERNET
+        payloadFormatVersion: '1.0'
