@@ -12,6 +12,11 @@ spring:
         dialect: org.hibernate.dialect.H2Dialect
   flyway:
     enabled: false
+  rabbitmq:
+    listener:
+      simple:
+        # Los tests no necesitan broker: los listeners no se conectan.
+        auto-startup: false
 
 # Valores ficticios: en las pruebas los tokens se simulan con spring-security-test,
 # el decoder real nunca llega a contactar a Azure.
@@ -23,3 +28,8 @@ azure:
 security:
   cors:
     allowed-origins: http://localhost:4200
+
+# Las pruebas no publican en Kafka (no hay broker); la prueba del contrato usa Kafka embebido.
+kafka:
+  publish-enabled: false
+  bootstrap-servers: localhost:1

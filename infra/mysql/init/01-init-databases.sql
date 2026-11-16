@@ -6,6 +6,7 @@ CREATE DATABASE IF NOT EXISTS carrito_db   CHARACTER SET utf8mb4 COLLATE utf8mb4
 CREATE DATABASE IF NOT EXISTS auth_db      CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE DATABASE IF NOT EXISTS orden_db     CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE DATABASE IF NOT EXISTS resenas_db   CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS pago_db      CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 CREATE USER IF NOT EXISTS 'pedidos'@'%' IDENTIFIED BY 'pedidos';
 GRANT ALL PRIVILEGES ON productos_db.* TO 'pedidos'@'%';
@@ -13,4 +14,5 @@ GRANT ALL PRIVILEGES ON carrito_db.*   TO 'pedidos'@'%';
 GRANT ALL PRIVILEGES ON auth_db.*      TO 'pedidos'@'%';
 GRANT ALL PRIVILEGES ON orden_db.*     TO 'pedidos'@'%';
 GRANT ALL PRIVILEGES ON resenas_db.*   TO 'pedidos'@'%';
+GRANT ALL PRIVILEGES ON pago_db.*      TO 'pedidos'@'%';
 FLUSH PRIVILEGES;

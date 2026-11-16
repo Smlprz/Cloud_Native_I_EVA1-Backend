@@ -110,6 +110,56 @@ class OrdenControllerTest {
     }
 
     @Test
+    void conItemsPublicaTambienElDescuentoDeStock() throws Exception {
+        var auth = jwt().authorities(
+                new SimpleGrantedAuthority("SCOPE_ordenes.write"),
+                new SimpleGrantedAuthority("ROLE_CLIENTE"));
+
+        mvc.perform(post("/api/ordenes").with(auth)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"total\": 2000, \"items\": [{\"productoId\": 5, \"cantidad\": 2}]}"))
+                .andExpect(status().isCreated());
+
+        var captor = org.mockito.ArgumentCaptor.forClass(com.petshop.orden.messaging.StockDescontarCommand.class);
+        org.mockito.Mockito.verify(rabbitTemplate).convertAndSend(
+                org.mockito.ArgumentMatchers.eq("pedidos.exchange"),
+                org.mockito.ArgumentMatchers.eq("stock.descontar"),
+                captor.capture());
+        org.junit.jupiter.api.Assertions.assertEquals(1, captor.getValue().items().size());
+        org.junit.jupiter.api.Assertions.assertEquals(5L, captor.getValue().items().get(0).productoId());
+        org.junit.jupiter.api.Assertions.assertEquals(2, captor.getValue().items().get(0).cantidad());
+    }
+
+    @Test
+    void sinItemsNoPublicaDescuentoDeStock() throws Exception {
+        var auth = jwt().authorities(
+                new SimpleGrantedAuthority("SCOPE_ordenes.write"),
+                new SimpleGrantedAuthority("ROLE_CLIENTE"));
+
+        mvc.perform(post("/api/ordenes").with(auth)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"total\": 300}"))
+                .andExpect(status().isCreated());
+
+        org.mockito.Mockito.verify(rabbitTemplate, org.mockito.Mockito.never()).convertAndSend(
+                org.mockito.ArgumentMatchers.eq("pedidos.exchange"),
+                org.mockito.ArgumentMatchers.eq("stock.descontar"),
+                org.mockito.ArgumentMatchers.any(Object.class));
+    }
+
+    @Test
+    void unItemConCantidadCeroDevuelve400() throws Exception {
+        var auth = jwt().authorities(
+                new SimpleGrantedAuthority("SCOPE_ordenes.write"),
+                new SimpleGrantedAuthority("ROLE_CLIENTE"));
+
+        mvc.perform(post("/api/ordenes").with(auth)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"total\": 300, \"items\": [{\"productoId\": 1, \"cantidad\": 0}]}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void tokenConScopesDeCarritoTambienPuedeCrearOrdenes() throws Exception {
         var auth = jwt().authorities(
                 new SimpleGrantedAuthority("SCOPE_carrito.write"),

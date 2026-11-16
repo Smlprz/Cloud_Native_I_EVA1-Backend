@@ -25,3 +25,8 @@ azure:
 security:
   cors:
     allowed-origins: http://localhost:4200
+
+# Las pruebas no publican en Kafka (no hay broker).
+kafka:
+  publish-enabled: false
+  bootstrap-servers: localhost:1

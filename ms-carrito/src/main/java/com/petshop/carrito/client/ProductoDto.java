@@ -10,6 +10,12 @@ public record ProductoDto(
         Long id,
         String nombre,
         BigDecimal precio,
-        int stock
+        int stock,
+        String categoria
 ) {
+
+    /** Constructor sin categoria (compatible con el codigo y las pruebas anteriores). */
+    public ProductoDto(Long id, String nombre, BigDecimal precio, int stock) {
+        this(id, nombre, precio, stock, null);
+    }
 }

@@ -6,6 +6,7 @@ import com.petshop.carrito.domain.Carrito;
 import com.petshop.carrito.domain.CarritoItem;
 import com.petshop.carrito.domain.Pedido;
 import com.petshop.carrito.domain.PedidoItem;
+import com.petshop.carrito.messaging.kafka.NavegacionPublisher;
 import com.petshop.carrito.repository.CarritoRepository;
 import com.petshop.carrito.repository.PedidoRepository;
 import com.petshop.carrito.web.dto.CarritoResponse;
@@ -27,13 +28,16 @@ public class CarritoService {
     private final CarritoRepository carritoRepository;
     private final PedidoRepository pedidoRepository;
     private final ProductosClient productosClient;
+    private final NavegacionPublisher navegacion;
 
     public CarritoService(CarritoRepository carritoRepository,
                           PedidoRepository pedidoRepository,
-                          ProductosClient productosClient) {
+                          ProductosClient productosClient,
+                          NavegacionPublisher navegacion) {
         this.carritoRepository = carritoRepository;
         this.pedidoRepository = pedidoRepository;
         this.productosClient = productosClient;
+        this.navegacion = navegacion;
     }
 
     @Transactional(readOnly = true)
@@ -64,7 +68,10 @@ public class CarritoService {
         } else {
             carrito.agregarItem(new CarritoItem(productoId, producto.nombre(), producto.precio(), cantidad));
         }
-        return CarritoResponse.from(carritoRepository.save(carrito));
+        CarritoResponse respuesta = CarritoResponse.from(carritoRepository.save(carrito));
+        navegacion.itemAgregado(usuarioId, productoId, producto.nombre(), producto.categoria(),
+                producto.precio(), cantidad);
+        return respuesta;
     }
 
     public CarritoResponse actualizarItem(String usuarioId, Long itemId, int cantidad) {
@@ -75,8 +82,12 @@ public class CarritoService {
 
     public CarritoResponse eliminarItem(String usuarioId, Long itemId) {
         Carrito carrito = obtenerCarritoAbierto(usuarioId);
-        carrito.quitarItem(buscarItem(carrito, itemId));
-        return CarritoResponse.from(carritoRepository.save(carrito));
+        CarritoItem item = buscarItem(carrito, itemId);
+        carrito.quitarItem(item);
+        CarritoResponse respuesta = CarritoResponse.from(carritoRepository.save(carrito));
+        navegacion.itemEliminado(usuarioId, item.getProductoId(), item.getNombreProducto(),
+                item.getPrecioUnitario(), item.getCantidad());
+        return respuesta;
     }
 
     public void vaciar(String usuarioId) {
@@ -102,7 +113,10 @@ public class CarritoService {
 
         carrito.setEstado(Carrito.CONFIRMADO);
         carritoRepository.save(carrito);
-        return PedidoResponse.from(pedidoRepository.save(pedido));
+        PedidoResponse respuesta = PedidoResponse.from(pedidoRepository.save(pedido));
+        carrito.getItems().forEach(item -> navegacion.compraRealizada(usuarioId, item.getProductoId(),
+                item.getNombreProducto(), item.getPrecioUnitario(), item.getCantidad()));
+        return respuesta;
     }
 
     @Transactional(readOnly = true)

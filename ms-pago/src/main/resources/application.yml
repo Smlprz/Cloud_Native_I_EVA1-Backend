@@ -1,0 +1,67 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: ms-pago
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/pago_db}
+    username: ${SPRING_DATASOURCE_USERNAME:pedidos}
+    password: ${SPRING_DATASOURCE_PASSWORD:pedidos}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    open-in-view: false
+    show-sql: false
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+# ---------------------------------------------------------------------------
+# Kafka. Los nombres de topicos se definen UNA sola vez por servicio, aqui.
+#   ms-pago --PAGO_APROBADO / PAGO_RECHAZADO / FRAUDE_BLOQUEADO--> [eventos.pagos] --> ms-analytics-recommendations
+# ---------------------------------------------------------------------------
+kafka:
+  # Los 3 brokers: si uno cae, el cliente usa los otros (KAFKA_BOOTSTRAP_SERVERS=ip:9092,ip:9093,ip:9094).
+  bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092,localhost:9093,localhost:9094}
+  topics:
+    pagos: eventos.pagos
+
+# Regla antifraude: la misma tarjeta mas de max-intentos veces dentro de la ventana se bloquea.
+app:
+  antifraude:
+    max-intentos: ${ANTIFRAUDE_MAX_INTENTOS:3}
+    ventana-segundos: ${ANTIFRAUDE_VENTANA_SEGUNDOS:10}
+    # Se mezcla con el numero de tarjeta antes de aplicar SHA-256 (el numero nunca se guarda).
+    pepper: ${CARD_HASH_PEPPER:pedidos360-pepper-solo-para-desarrollo}
+  roles:
+    admin: ${APP_ROLES_ADMIN:}
+    vendedor: ${APP_ROLES_VENDEDOR:}
+
+services:
+  ordenes:
+    base-url: ${ORDENES_URL:http://localhost:8085}
+
+# Parametros del IDaaS (Azure AD / Microsoft Entra ID).
+azure:
+  jwk-set-uri: ${AZURE_JWK_SET_URI:https://login.microsoftonline.com/REEMPLAZAR_TENANT_ID/discovery/v2.0/keys}
+  issuer: ${AZURE_ISSUER:https://login.microsoftonline.com/REEMPLAZAR_TENANT_ID/v2.0}
+  audience: ${AZURE_AUDIENCE:api://REEMPLAZAR_CLIENT_ID}
+
+security:
+  cors:
+    allowed-origins: ${SECURITY_CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:3001}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true

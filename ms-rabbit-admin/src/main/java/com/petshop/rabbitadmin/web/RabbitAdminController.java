@@ -5,12 +5,13 @@ import com.petshop.rabbitadmin.web.dto.BindingRequest;
 import com.petshop.rabbitadmin.web.dto.ExchangeRequest;
 import com.petshop.rabbitadmin.web.dto.QueueInfoResponse;
 import com.petshop.rabbitadmin.web.dto.QueueRequest;
+import com.petshop.rabbitadmin.web.dto.NombresRabbit;
 import jakarta.validation.Valid;
-import org.springframework.amqp.AmqpException;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,7 +19,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
 
 /**
  * API de administracion de RabbitMQ. Exige JWT de Azure AD con rol ADMIN y scope rabbit.admin
@@ -43,7 +43,7 @@ public class RabbitAdminController {
 
     @DeleteMapping("/exchanges/{name}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void eliminarExchange(@PathVariable String name) {
+    public void eliminarExchange(@PathVariable @Size(max = NombresRabbit.MAX) @Pattern(regexp = NombresRabbit.NOMBRE_REGEX, message = NombresRabbit.NOMBRE_MENSAJE) String name) {
         service.eliminarExchange(name);
     }
 
@@ -54,13 +54,13 @@ public class RabbitAdminController {
     }
 
     @GetMapping("/queues/{name}")
-    public QueueInfoResponse infoCola(@PathVariable String name) {
+    public QueueInfoResponse infoCola(@PathVariable @Size(max = NombresRabbit.MAX) @Pattern(regexp = NombresRabbit.NOMBRE_REGEX, message = NombresRabbit.NOMBRE_MENSAJE) String name) {
         return service.infoCola(name);
     }
 
     @DeleteMapping("/queues/{name}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void eliminarCola(@PathVariable String name) {
+    public void eliminarCola(@PathVariable @Size(max = NombresRabbit.MAX) @Pattern(regexp = NombresRabbit.NOMBRE_REGEX, message = NombresRabbit.NOMBRE_MENSAJE) String name) {
         service.eliminarCola(name);
     }
 
@@ -74,10 +74,5 @@ public class RabbitAdminController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void eliminarBinding(@Valid @RequestBody BindingRequest request) {
         service.eliminarBinding(request);
-    }
-
-    @ExceptionHandler(AmqpException.class)
-    public void rabbitNoDisponible(AmqpException e) {
-        throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "RabbitMQ no disponible: " + e.getMessage());
     }
 }

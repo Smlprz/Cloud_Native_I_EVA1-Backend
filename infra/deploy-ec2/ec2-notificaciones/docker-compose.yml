@@ -1,23 +1,28 @@
 # EC2 #4 - NOTIFICACIONES (correo de confirmacion de pedido)
 #
-#   GMAIL_USERNAME=tu-correo@gmail.com GMAIL_APP_PASSWORD=xxxxxxxxxxxxxxxx sudo -E docker compose up -d --build
+#   GMAIL_USERNAME=tu-correo@gmail.com GMAIL_APP_PASSWORD=xxxxxxxxxxxxxxxx sudo docker compose up -d
 #
 # No necesita base de datos ni conexion a las otras EC2: es stateless.
 # Security Group de esta EC2: abrir 8084.
 
 services:
   ms-notificaciones:
-    build: ../../../ms-notificaciones
+    image: ${DOCKERHUB_USER:-tukionbush}/pedidos360-ms-notificaciones:${IMAGE_TAG:-3.0}
     container_name: pedidos360-ms-notificaciones
     restart: unless-stopped
     environment:
-      SPRING_RABBITMQ_HOST: ${RABBITMQ_EC2_HOST:-localhost}
+      SPRING_RABBITMQ_ADDRESSES: ${RABBITMQ_EC2_HOST:-localhost}:5672,${RABBITMQ_EC2_HOST:-localhost}:5673
       SPRING_RABBITMQ_USERNAME: ${RABBITMQ_USER:-guest}
       SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-guest}
       AZURE_JWK_SET_URI: https://login.microsoftonline.com/e5372bf0-c5e3-4286-887c-79069f209c1f/discovery/v2.0/keys
       AZURE_ISSUER: https://login.microsoftonline.com/e5372bf0-c5e3-4286-887c-79069f209c1f/v2.0
-      AZURE_AUDIENCE: api://ce3e5b61-0b01-4a67-a42b-f15ccb364024
+      AZURE_AUDIENCE: ${AZURE_AUDIENCE:-api://054a13aa-d3c3-4155-9b83-d3b1c964d7ae}
       APP_ROLES_ADMIN: ${APP_ROLES_ADMIN:-}
+      # MAIL_SIMULADO=true: el correo solo se escribe en el log (demo sin Gmail)
+      MAIL_SIMULADO: ${MAIL_SIMULADO:-false}
+      # Destinatario de la alerta de stock bajo (por defecto, la misma cuenta de Gmail)
+      STOCK_ALERT_EMAIL: ${STOCK_ALERT_EMAIL:-}
+      MAIL_DESTINO_FORZADO: ${MAIL_DESTINO_FORZADO:-}
       GMAIL_USERNAME: ${GMAIL_USERNAME}
       GMAIL_APP_PASSWORD: ${GMAIL_APP_PASSWORD}
     ports:

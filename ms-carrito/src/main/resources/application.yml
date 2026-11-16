@@ -60,3 +60,15 @@ management:
     health:
       probes:
         enabled: true
+
+# ---------------------------------------------------------------------------
+# Kafka. ms-carrito PUBLICA un evento cuando el usuario agrega o quita un producto y cuando compra.
+#   ms-carrito --ITEM_AGREGADO / ITEM_ELIMINADO / COMPRA_REALIZADA--> [eventos.navegacion] --> ms-analytics-recommendations
+# Si Kafka no responde, el carrito sigue funcionando (el evento se pierde y queda en el log).
+# ---------------------------------------------------------------------------
+kafka:
+  publish-enabled: ${KAFKA_PUBLISH_ENABLED:true}
+  # Los 3 brokers: si uno cae, el cliente usa los otros (KAFKA_BOOTSTRAP_SERVERS=ip:9092,ip:9093,ip:9094).
+  bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092,localhost:9093,localhost:9094}
+  topics:
+    navegacion: eventos.navegacion

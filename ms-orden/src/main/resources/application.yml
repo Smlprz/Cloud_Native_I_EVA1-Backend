@@ -6,10 +6,14 @@ spring:
     name: ms-orden
 
   rabbitmq:
-    host: ${SPRING_RABBITMQ_HOST:localhost}
-    port: ${SPRING_RABBITMQ_PORT:5672}
+    # Cluster: SPRING_RABBITMQ_ADDRESSES="host1:5672,host2:5673" (el cliente prueba el siguiente
+    # nodo si uno cae). Si no se define, se usa un solo nodo con HOST/PORT como antes.
+    addresses: ${SPRING_RABBITMQ_ADDRESSES:${SPRING_RABBITMQ_HOST:localhost}:${SPRING_RABBITMQ_PORT:5672}}
     username: ${SPRING_RABBITMQ_USERNAME:guest}
     password: ${SPRING_RABBITMQ_PASSWORD:guest}
+    connection-timeout: 5s
+    publisher-confirm-type: correlated
+    publisher-returns: true
 
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/orden_db}
@@ -26,6 +30,36 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
+
+# ---------------------------------------------------------------------------
+# Contrato de mensajeria de Pedidos360 (identico en todos los microservicios).
+# Unico lugar donde se escriben nombres de exchanges, colas y routing keys.
+#
+#   ms-orden --orden.creada----> [pedidos.exchange: direct] --> orden.creada    --> ms-notificaciones (correo)
+#   ms-orden --stock.descontar-> [pedidos.exchange: direct] --> stock.descontar --> ms-productos (descuenta stock)
+#   ms-productos --stock.bajo--> [pedidos.eventos:  topic ] --> stock.bajo      --> ms-notificaciones (alerta)
+#   Mensaje rechazado en cualquier cola --> [pedidos.dlx: direct] --> <cola>.dlq
+# ---------------------------------------------------------------------------
+messaging:
+  exchanges:
+    direct: pedidos.exchange
+    topic: pedidos.eventos
+    dlx: pedidos.dlx
+  queues:
+    orden-creada: orden.creada
+    stock-descontar: stock.descontar
+    stock-bajo: stock.bajo
+  dlqs:
+    orden-creada: orden.creada.dlq
+    stock-descontar: stock.descontar.dlq
+    stock-bajo: stock.bajo.dlq
+  routing-keys:
+    orden-creada: orden.creada
+    stock-descontar: stock.descontar
+    stock-bajo: stock.bajo
+  retry:
+    max-attempts: ${MESSAGING_RETRY_MAX_ATTEMPTS:3}
+    backoff-ms: ${MESSAGING_RETRY_BACKOFF_MS:2000}
 
 # Parametros del IDaaS (Azure AD / Microsoft Entra ID). Ver docs/AZURE-AD-SETUP.md.
 azure:

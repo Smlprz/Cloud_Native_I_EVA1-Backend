@@ -1,0 +1,30 @@
+# EC2 - ANALITICA Y RECOMENDACIONES (ms-analytics-recommendations)
+#
+#   KAFKA_EC2_HOST=<ip-ec2-kafka> PRODUCTOS_URL=http://<ip-ec2-productos>:8081 sudo -E docker compose up -d
+#
+# - Consume eventos.navegacion (2 consumer groups) y eventos.pagos desde los 3 brokers de Kafka.
+# - Guarda el historial de eventos y los perfiles de navegacion en Amazon DynamoDB (ANALYTICS_STORE=dynamodb).
+#   Las tablas se crean solas al arrancar. En AWS Academy la instancia necesita el rol "LabInstanceProfile"
+#   (EC2 > Acciones > Seguridad > Modificar rol de IAM), que da acceso a DynamoDB sin claves.
+# - El dashboard abre un WebSocket a /ws/metricas; el Caddy del frontend lo reenvia a esta maquina (puerto 8089).
+# Security Group de esta EC2: abrir 8089 (solo desde la EC2 del frontend y el API Gateway/VPC).
+
+services:
+  ms-analytics:
+    image: ${DOCKERHUB_USER:-tukionbush}/pedidos360-ms-analytics-recommendations:${IMAGE_TAG:-3.0}
+    container_name: pedidos360-ms-analytics
+    restart: unless-stopped
+    environment:
+      JAVA_TOOL_OPTIONS: ${JAVA_TOOL_OPTIONS:--Xmx320m}
+      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_EC2_HOST}:9092,${KAFKA_EC2_HOST}:9093,${KAFKA_EC2_HOST}:9094
+      ANALYTICS_STORE: ${ANALYTICS_STORE:-dynamodb}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      PRODUCTOS_URL: ${PRODUCTOS_URL}
+      AZURE_JWK_SET_URI: https://login.microsoftonline.com/e5372bf0-c5e3-4286-887c-79069f209c1f/discovery/v2.0/keys
+      AZURE_ISSUER: https://login.microsoftonline.com/e5372bf0-c5e3-4286-887c-79069f209c1f/v2.0
+      AZURE_AUDIENCE: ${AZURE_AUDIENCE:-api://054a13aa-d3c3-4155-9b83-d3b1c964d7ae}
+      SECURITY_CORS_ALLOWED_ORIGINS: ${FRONTEND_ORIGIN:-http://localhost:3000,http://localhost:3001,https://100-63-104-24.nip.io}
+      APP_ROLES_ADMIN: ${APP_ROLES_ADMIN:-}
+      APP_ROLES_VENDEDOR: ${APP_ROLES_VENDEDOR:-}
+    ports:
+      - "8089:8080"

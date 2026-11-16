@@ -1,24 +1,88 @@
-# EC2 - RABBITMQ (broker de mensajes)
+# EC2 - RABBITMQ: cluster de 2 nodos (rabbitmq-1, rabbitmq-2) + politica de replicacion.
 #
-#   RABBITMQ_USER=<usuario> RABBITMQ_PASSWORD=<clave> sudo -E docker compose up -d
+#   RABBITMQ_USER=<usuario> RABBITMQ_PASSWORD=<clave> RABBITMQ_ERLANG_COOKIE=<texto-largo> sudo -E docker compose up -d
 #
-# Guardar usuario y clave en un .env junto a este archivo (no se sube al repo).
-# Security Group de esta EC2: 22, 5672 (solo desde las EC2 de orden y notificaciones)
-# y 15672 (panel web, solo desde tu IP).
+# Guardar usuario, clave y cookie en un .env junto a este archivo (no se sube al repo).
+# Verificar el cluster:  sudo docker exec rabbitmq-1 rabbitmqctl cluster_status
+#
+# Los dos nodos arrancan a la vez (sin depends_on entre ellos): si un nodo de un cluster ya formado
+# se reinicia solo, espera hasta 5 min a su companero; un depends_on cruzado los bloquearia.
+#
+# Security Group de esta EC2:
+#   22                      solo desde tu IP
+#   5672 y 5673 (AMQP)      solo desde las EC2 de los microservicios (o el rango de la VPC)
+#   15672 y 15673 (panel)   solo desde tu IP
+# Los microservicios se conectan a ambos nodos:
+#   SPRING_RABBITMQ_ADDRESSES=<ip-ec2-rabbitmq>:5672,<ip-ec2-rabbitmq>:5673
 
 services:
-  rabbitmq:
-    image: rabbitmq:3.13-management
-    container_name: pedidos360-rabbitmq
+  rabbitmq-1:
+    image: rabbitmq:3.13-management-alpine
+    container_name: rabbitmq-1
+    hostname: rabbitmq-1
     restart: unless-stopped
+    ports:
+      - "5672:5672"      # AMQP
+      - "15672:15672"    # Panel web de administracion
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-guest}
-    ports:
-      - "5672:5672"
-      - "15672:15672"
+      RABBITMQ_ERLANG_COOKIE: ${RABBITMQ_ERLANG_COOKIE:-pedidos360_erlang_cookie}
     volumes:
-      - rabbitmq_data:/var/lib/rabbitmq
+      - rabbitmq_data_1:/var/lib/rabbitmq
+      - ./rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+    healthcheck:
+      test: ["CMD-SHELL", "rabbitmq-diagnostics -q check_running && rabbitmq-diagnostics -q check_port_listener 15672"]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+      start_period: 20s
+
+  rabbitmq-2:
+    image: rabbitmq:3.13-management-alpine
+    container_name: rabbitmq-2
+    hostname: rabbitmq-2
+    restart: unless-stopped
+    ports:
+      - "5673:5672"      # AMQP (mapeado a 5673 en el host)
+      - "15673:15672"    # Panel web de administracion
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-guest}
+      RABBITMQ_ERLANG_COOKIE: ${RABBITMQ_ERLANG_COOKIE:-pedidos360_erlang_cookie}   # MISMA cookie que el nodo 1
+    volumes:
+      - rabbitmq_data_2:/var/lib/rabbitmq
+      - ./rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+    healthcheck:
+      test: ["CMD-SHELL", "rabbitmq-diagnostics -q check_running && rabbitmq-diagnostics -q check_port_listener 15672"]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+      start_period: 20s
+
+  # Tarea de un solo uso: aplica la politica "ha-all" (replica todas las colas en los 2 nodos).
+  # Una politica se aplica tambien a las colas que se creen despues. Termina con "Exited (0)".
+  rabbitmq-setup:
+    image: curlimages/curl:8.10.1
+    container_name: rabbitmq-setup
+    restart: "no"
+    depends_on:
+      rabbitmq-1:
+        condition: service_healthy
+      rabbitmq-2:
+        condition: service_healthy
+    environment:
+      RABBITMQ_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-guest}
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >
+        curl -fsS --retry 30 --retry-delay 2 --retry-connrefused -u "$$RABBITMQ_USER:$$RABBITMQ_PASSWORD" -X PUT
+        -H 'content-type: application/json'
+        -d '{"pattern":".*","apply-to":"queues","priority":0,"definition":{"ha-mode":"all","ha-sync-mode":"automatic"}}'
+        http://rabbitmq-1:15672/api/policies/%2F/ha-all
+        && echo 'Politica ha-all aplicada: las colas se replican en ambos nodos'
 
 volumes:
-  rabbitmq_data:
+  rabbitmq_data_1:
+  rabbitmq_data_2:

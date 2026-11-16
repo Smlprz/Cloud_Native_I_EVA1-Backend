@@ -1,0 +1,45 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: ms-kafka-admin
+
+# Cliente Kafka (AdminClient). Con el cluster de 3 brokers se listan todos: si uno cae, el cliente
+# usa el siguiente. Dentro de la red docker: KAFKA_BOOTSTRAP_SERVERS=kafka-1:29092,kafka-2:29092,kafka-3:29092
+kafka:
+  bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092,localhost:9093,localhost:9094}
+  # Tiempos cortos: si el cluster no responde, la API contesta 503 en segundos y no se queda colgada.
+  request-timeout-ms: ${KAFKA_REQUEST_TIMEOUT_MS:5000}
+  api-timeout-ms: ${KAFKA_API_TIMEOUT_MS:8000}
+
+app:
+  kafka:
+    # Valores por defecto al crear un topico sin indicarlos (como el cluster: 3 particiones, 3 replicas).
+    default-partitions: 3
+    default-replication-factor: 3
+    # Topicos del sistema: no se pueden eliminar desde la API.
+    protected-topics: ${KAFKA_PROTECTED_TOPICS:eventos.navegacion,eventos.pagos}
+  roles:
+    admin: ${APP_ROLES_ADMIN:}
+    vendedor: ${APP_ROLES_VENDEDOR:}
+
+# Parametros del IDaaS (Azure AD / Microsoft Entra ID).
+azure:
+  jwk-set-uri: ${AZURE_JWK_SET_URI:https://login.microsoftonline.com/REEMPLAZAR_TENANT_ID/discovery/v2.0/keys}
+  issuer: ${AZURE_ISSUER:https://login.microsoftonline.com/REEMPLAZAR_TENANT_ID/v2.0}
+  audience: ${AZURE_AUDIENCE:api://REEMPLAZAR_CLIENT_ID}
+
+security:
+  cors:
+    allowed-origins: ${SECURITY_CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:3001}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true

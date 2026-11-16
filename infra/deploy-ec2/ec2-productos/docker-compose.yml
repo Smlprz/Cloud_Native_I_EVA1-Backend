@@ -15,7 +15,7 @@ services:
       - "3307:3306"
     volumes:
       - mysql_data:/var/lib/mysql
-      - ../../mysql/init:/docker-entrypoint-initdb.d:ro
+      - ./mysql-init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
       interval: 5s
@@ -23,7 +23,7 @@ services:
       retries: 20
 
   ms-productos:
-    build: ../../../ms-productos
+    image: ${DOCKERHUB_USER:-tukionbush}/pedidos360-ms-productos:${IMAGE_TAG:-3.0}
     container_name: pedidos360-ms-productos
     restart: unless-stopped
     depends_on:
@@ -35,10 +35,17 @@ services:
       SPRING_DATASOURCE_PASSWORD: pedidos
       AZURE_JWK_SET_URI: https://login.microsoftonline.com/e5372bf0-c5e3-4286-887c-79069f209c1f/discovery/v2.0/keys
       AZURE_ISSUER: https://login.microsoftonline.com/e5372bf0-c5e3-4286-887c-79069f209c1f/v2.0
-      AZURE_AUDIENCE: api://ce3e5b61-0b01-4a67-a42b-f15ccb364024
-      SECURITY_CORS_ALLOWED_ORIGINS: ${FRONTEND_ORIGIN:-http://localhost:3000,http://localhost:3001,https://100-60-217-178.sslip.io}
+      AZURE_AUDIENCE: ${AZURE_AUDIENCE:-api://054a13aa-d3c3-4155-9b83-d3b1c964d7ae}
+      SECURITY_CORS_ALLOWED_ORIGINS: ${FRONTEND_ORIGIN:-http://localhost:3000,http://localhost:3001,https://100-63-104-24.nip.io}
       APP_ROLES_ADMIN: ${APP_ROLES_ADMIN:-}
       APP_ROLES_VENDEDOR: ${APP_ROLES_VENDEDOR:-}
+      # RabbitMQ: consume stock.descontar y publica stock.bajo (cluster de 2 nodos)
+      SPRING_RABBITMQ_ADDRESSES: ${RABBITMQ_EC2_HOST:-localhost}:5672,${RABBITMQ_EC2_HOST:-localhost}:5673
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_USER:-guest}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-guest}
+      STOCK_UMBRAL_BAJO: ${STOCK_UMBRAL_BAJO:-5}
+      # Kafka: eventos de navegacion (topico eventos.navegacion). Los 3 brokers; si uno cae se usan los otros.
+      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_EC2_HOST:-localhost}:9092,${KAFKA_EC2_HOST:-localhost}:9093,${KAFKA_EC2_HOST:-localhost}:9094
     ports:
       - "8081:8080"
 

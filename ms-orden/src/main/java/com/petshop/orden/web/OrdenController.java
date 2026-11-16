@@ -44,6 +44,6 @@ public class OrdenController {
         String destino = request.email() != null && !request.email().isBlank()
                 ? request.email().trim()
                 : UsuarioActual.email(jwt);
-        return service.crear(UsuarioActual.id(jwt), destino, request.total());
+        return service.crear(UsuarioActual.id(jwt), destino, request.total(), request.items());
     }
 }

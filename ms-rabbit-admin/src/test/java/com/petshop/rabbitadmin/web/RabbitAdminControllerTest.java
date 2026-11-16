@@ -99,6 +99,85 @@ class RabbitAdminControllerTest {
     }
 
     @Test
+    void colaConNombreVacioDevuelve400ConMensajeClaro() throws Exception {
+        mvc.perform(post("/api/rabbit/queues").with(admin())
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"name\":\"\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.detail")
+                        .value(org.hamcrest.Matchers.containsString("name")));
+        org.mockito.Mockito.verifyNoInteractions(amqpAdmin);
+    }
+
+    @Test
+    void colaConCaracteresInvalidosDevuelve400() throws Exception {
+        mvc.perform(post("/api/rabbit/queues").with(admin())
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"name\":\"mi cola/rara!\"}"))
+                .andExpect(status().isBadRequest());
+        org.mockito.Mockito.verifyNoInteractions(amqpAdmin);
+    }
+
+    @Test
+    void nombreConPrefijoReservadoAmqDevuelve400() throws Exception {
+        mvc.perform(post("/api/rabbit/exchanges").with(admin())
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"name\":\"amq.mio\",\"type\":\"direct\"}"))
+                .andExpect(status().isBadRequest());
+        org.mockito.Mockito.verifyNoInteractions(amqpAdmin);
+    }
+
+    @Test
+    void nombreDemasiadoLargoDevuelve400() throws Exception {
+        String largo = "a".repeat(256);
+        mvc.perform(post("/api/rabbit/queues").with(admin())
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"name\":\"" + largo + "\"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void routingKeyDeMuertosSinExchangeDevuelve400() throws Exception {
+        mvc.perform(post("/api/rabbit/queues").with(admin())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"q.ok\",\"deadLetterRoutingKey\":\"q.ok.dlq\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.detail")
+                        .value(org.hamcrest.Matchers.containsString("deadLetterExchange")));
+        org.mockito.Mockito.verifyNoInteractions(amqpAdmin);
+    }
+
+    @Test
+    void bindingSinColaDevuelve400() throws Exception {
+        mvc.perform(post("/api/rabbit/bindings").with(admin())
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"exchange\":\"ex.test\"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void eliminarUnaColaConNombreInvalidoDevuelve400() throws Exception {
+        mvc.perform(delete("/api/rabbit/queues/amq.gen-abc").with(admin()))
+                .andExpect(status().isBadRequest());
+        org.mockito.Mockito.verifyNoInteractions(amqpAdmin);
+    }
+
+    @Test
+    void siRabbitNoEstaDisponibleDevuelve503() throws Exception {
+        org.mockito.Mockito.doThrow(new org.springframework.amqp.AmqpConnectException(new RuntimeException("sin broker")))
+                .when(amqpAdmin).declareQueue(any(Queue.class));
+
+        mvc.perform(post("/api/rabbit/queues").with(admin())
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"name\":\"q.sinbroker\"}"))
+                .andExpect(status().isServiceUnavailable());
+    }
+
+    @Test
+    void siElBrokerRechazaLaOperacionDevuelve409() throws Exception {
+        org.mockito.Mockito.doThrow(new org.springframework.amqp.AmqpException("PRECONDITION_FAILED"))
+                .when(amqpAdmin).declareQueue(any(Queue.class));
+
+        mvc.perform(post("/api/rabbit/queues").with(admin())
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"name\":\"q.conflicto\"}"))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
     void colaInexistenteDevuelve404() throws Exception {
         mvc.perform(get("/api/rabbit/queues/no-existe").with(admin())).andExpect(status().isNotFound());
     }

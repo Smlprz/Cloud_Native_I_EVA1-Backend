@@ -1,0 +1,85 @@
+# Servicios de Kafka en local: ms-pago, ms-analytics-recommendations, ms-kafka-admin y DynamoDB Local.
+#
+#   1) Levantar el cluster Kafka (3 Zookeeper + 3 brokers):  cd deploy-ec2/ec2-kafka && docker compose up -d
+#      (y, si se quiere la consola:  docker compose -f docker-compose.ui.yml up -d  -> http://localhost:8090)
+#   2) Levantar estos servicios:                             docker compose -f docker-compose.kafka.yml up -d --build
+#
+# Se unen a la red "pedidos360-kafka" del cluster (por eso el cluster va primero) y hablan con los brokers por
+# kafka-1:29092, kafka-2:29092 y kafka-3:29092. ms-pago usa la MySQL y ms-orden del entorno principal
+# (docker compose up -d en esta carpeta) a traves de host.docker.internal; ms-analytics lee el catalogo de ms-productos.
+#
+# Puertos: ms-pago :8088, ms-analytics :8089, ms-kafka-admin :8091, DynamoDB Local :8000.
+# Valores de Azure: igual que el resto, placeholders que dejan las rutas protegidas respondiendo 401.
+#
+# Memoria: el cluster Kafka usa ~1,2 GB y cada servicio Java ~350 MB. En un equipo con poca RAM, levantar solo lo que se necesite.
+
+name: kafka-servicios
+
+x-azure: &azure
+  AZURE_JWK_SET_URI: ${AZURE_JWK_SET_URI:-https://login.microsoftonline.com/e5372bf0-c5e3-4286-887c-79069f209c1f/discovery/v2.0/keys}
+  AZURE_ISSUER: ${AZURE_ISSUER:-https://login.microsoftonline.com/e5372bf0-c5e3-4286-887c-79069f209c1f/v2.0}
+  AZURE_AUDIENCE: ${AZURE_AUDIENCE:-api://054a13aa-d3c3-4155-9b83-d3b1c964d7ae}
+  SECURITY_CORS_ALLOWED_ORIGINS: ${FRONTEND_ORIGIN:-http://localhost:3000,http://localhost:3001}
+  APP_ROLES_ADMIN: ${APP_ROLES_ADMIN:-}
+  JAVA_TOOL_OPTIONS: ${JAVA_TOOL_OPTIONS:--Xmx256m}
+
+x-kafka-interno: &kafka-interno
+  KAFKA_BOOTSTRAP_SERVERS: kafka-1:29092,kafka-2:29092,kafka-3:29092
+
+services:
+  dynamodb-local:
+    image: amazon/dynamodb-local:2.5.2
+    container_name: dynamodb-local
+    restart: unless-stopped
+    command: ["-jar", "DynamoDBLocal.jar", "-inMemory", "-sharedDb"]
+    ports:
+      - "8000:8000"
+
+  ms-kafka-admin:
+    build: ../ms-kafka-admin
+    container_name: pedidos360-ms-kafka-admin
+    restart: unless-stopped
+    environment:
+      <<: [*azure, *kafka-interno]
+    ports:
+      - "8091:8080"
+    networks: [kafka]
+
+  ms-analytics:
+    build: ../ms-analytics-recommendations
+    container_name: pedidos360-ms-analytics
+    restart: unless-stopped
+    depends_on:
+      - dynamodb-local
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      <<: [*azure, *kafka-interno]
+      ANALYTICS_STORE: dynamodb
+      DYNAMODB_ENDPOINT: http://dynamodb-local:8000
+      AWS_REGION: us-east-1
+      PRODUCTOS_URL: ${PRODUCTOS_URL:-http://host.docker.internal:8081}
+    ports:
+      - "8089:8080"
+    networks: [default, kafka]
+
+  ms-pago:
+    build: ../ms-pago
+    container_name: pedidos360-ms-pago
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      <<: [*azure, *kafka-interno]
+      SPRING_DATASOURCE_URL: ${PAGO_DB_URL:-jdbc:mysql://host.docker.internal:3307/pago_db}
+      SPRING_DATASOURCE_USERNAME: pedidos
+      SPRING_DATASOURCE_PASSWORD: pedidos
+      ORDENES_URL: ${ORDENES_URL:-http://host.docker.internal:8085}
+    ports:
+      - "8088:8080"
+    networks: [kafka]
+
+networks:
+  kafka:
+    name: pedidos360-kafka
+    external: true

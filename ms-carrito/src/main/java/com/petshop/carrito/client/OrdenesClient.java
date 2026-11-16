@@ -44,6 +44,12 @@ public class OrdenesClient {
         try {
             Map<String, Object> cuerpo = new HashMap<>();
             cuerpo.put("total", pedido.total());
+            // Los items permiten a ms-orden pedir el descuento de stock a ms-productos por RabbitMQ.
+            if (pedido.items() != null && !pedido.items().isEmpty()) {
+                cuerpo.put("items", pedido.items().stream()
+                        .map(i -> Map.of("productoId", i.productoId(), "cantidad", i.cantidad()))
+                        .toList());
+            }
             if (email != null && !email.isBlank()) {
                 cuerpo.put("email", email.trim());
             }

@@ -26,6 +26,22 @@ spring:
     enabled: true
     locations: classpath:db/migration
 
+  rabbitmq:
+    # Cluster: SPRING_RABBITMQ_ADDRESSES="host1:5672,host2:5673" (el cliente prueba el siguiente
+    # nodo si uno cae). Si no se define, se usa un solo nodo con HOST/PORT.
+    addresses: ${SPRING_RABBITMQ_ADDRESSES:${SPRING_RABBITMQ_HOST:localhost}:${SPRING_RABBITMQ_PORT:5672}}
+    username: ${SPRING_RABBITMQ_USERNAME:guest}
+    password: ${SPRING_RABBITMQ_PASSWORD:guest}
+    connection-timeout: 5s
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    listener:
+      simple:
+        # ACK explicito: lo gestiona AckSupport (ack / reintento / nack hacia la DLQ).
+        acknowledge-mode: manual
+        prefetch: 10
+        default-requeue-rejected: false
+
 # Parametros del IDaaS (Azure AD / Microsoft Entra ID).
 # Reemplazar TENANT_ID y CLIENT_ID por los valores reales del App Registration
 # (ver docs/AZURE-AD-SETUP.md). En despliegue se inyectan como variables de entorno.
@@ -45,6 +61,9 @@ app:
   roles:
     admin: ${APP_ROLES_ADMIN:}
     vendedor: ${APP_ROLES_VENDEDOR:}
+  stock:
+    # Un descuento que deja un producto con stock <= umbral publica stock.bajo (topic).
+    umbral-bajo: ${STOCK_UMBRAL_BAJO:5}
 
 management:
   endpoints:
@@ -55,3 +74,46 @@ management:
     health:
       probes:
         enabled: true
+
+# ---------------------------------------------------------------------------
+# Contrato de mensajeria de Pedidos360 (identico en todos los microservicios).
+# Unico lugar donde se escriben nombres de exchanges, colas y routing keys.
+# Este servicio CONSUME stock.descontar y PUBLICA stock.bajo.
+#
+#   ms-orden --orden.creada----> [pedidos.exchange: direct] --> orden.creada    --> ms-notificaciones (correo)
+#   ms-orden --stock.descontar-> [pedidos.exchange: direct] --> stock.descontar --> ms-productos (descuenta stock)
+#   ms-productos --stock.bajo--> [pedidos.eventos:  topic ] --> stock.bajo      --> ms-notificaciones (alerta)
+#   Mensaje rechazado en cualquier cola --> [pedidos.dlx: direct] --> <cola>.dlq
+# ---------------------------------------------------------------------------
+messaging:
+  exchanges:
+    direct: pedidos.exchange
+    topic: pedidos.eventos
+    dlx: pedidos.dlx
+  queues:
+    orden-creada: orden.creada
+    stock-descontar: stock.descontar
+    stock-bajo: stock.bajo
+  dlqs:
+    orden-creada: orden.creada.dlq
+    stock-descontar: stock.descontar.dlq
+    stock-bajo: stock.bajo.dlq
+  routing-keys:
+    orden-creada: orden.creada
+    stock-descontar: stock.descontar
+    stock-bajo: stock.bajo
+  retry:
+    max-attempts: ${MESSAGING_RETRY_MAX_ATTEMPTS:3}
+    backoff-ms: ${MESSAGING_RETRY_BACKOFF_MS:2000}
+
+# ---------------------------------------------------------------------------
+# Kafka. ms-productos PUBLICA un evento cada vez que un usuario ve el detalle de un producto.
+#   ms-productos --PRODUCTO_VISTO--> [eventos.navegacion] --> ms-analytics-recommendations
+# Si Kafka no responde, el catalogo sigue funcionando (el evento se pierde y queda en el log).
+# ---------------------------------------------------------------------------
+kafka:
+  publish-enabled: ${KAFKA_PUBLISH_ENABLED:true}
+  # Los 3 brokers: si uno cae, el cliente usa los otros (KAFKA_BOOTSTRAP_SERVERS=ip:9092,ip:9093,ip:9094).
+  bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092,localhost:9093,localhost:9094}
+  topics:
+    navegacion: eventos.navegacion

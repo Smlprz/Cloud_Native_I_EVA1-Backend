@@ -1,0 +1,23 @@
+kafka:
+  bootstrap-servers: localhost:1
+  # Las pruebas que necesitan Kafka usan un broker embebido y activan los listeners.
+  listeners-enabled: false
+  consumer:
+    retry-attempts: 2
+    retry-backoff-ms: 50
+
+analytics:
+  store: memory
+
+services:
+  productos:
+    base-url: http://localhost:9999
+
+azure:
+  jwk-set-uri: https://login.microsoftonline.com/common/discovery/v2.0/keys
+  issuer: https://login.microsoftonline.com/test-tenant/v2.0
+  audience: api://test-client-id
+
+security:
+  cors:
+    allowed-origins: http://localhost:3000

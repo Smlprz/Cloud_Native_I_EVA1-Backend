@@ -5,18 +5,19 @@ spring:
   application:
     name: ms-notificaciones
   rabbitmq:
-    host: ${SPRING_RABBITMQ_HOST:localhost}
-    port: ${SPRING_RABBITMQ_PORT:5672}
+    # Cluster: SPRING_RABBITMQ_ADDRESSES="host1:5672,host2:5673" (el cliente prueba el siguiente
+    # nodo si uno cae). Si no se define, se usa un solo nodo con HOST/PORT como antes.
+    addresses: ${SPRING_RABBITMQ_ADDRESSES:${SPRING_RABBITMQ_HOST:localhost}:${SPRING_RABBITMQ_PORT:5672}}
     username: ${SPRING_RABBITMQ_USERNAME:guest}
     password: ${SPRING_RABBITMQ_PASSWORD:guest}
+    connection-timeout: 5s
     listener:
       simple:
+        # ACK explicito: lo gestiona AckSupport (ack / reintento / nack hacia la DLQ).
         # Un mensaje que falla NO vuelve a la cola: tras los reintentos va a la DLQ.
+        acknowledge-mode: manual
+        prefetch: 10
         default-requeue-rejected: false
-        retry:
-          enabled: true
-          max-attempts: 3
-          initial-interval: 2s
   mail:
     host: smtp.gmail.com
     port: 587
@@ -33,9 +34,47 @@ spring:
 app:
   mail:
     from: ${GMAIL_USERNAME:no-reply@petshop.cl}
+    # true = modo simulado: el correo solo se escribe en el log (demo sin credenciales de Gmail).
+    simulado: ${MAIL_SIMULADO:false}
+    # Si se define, todo correo va a esta direccion (util si el email del JWT no tiene buzon).
+    destino-forzado: ${MAIL_DESTINO_FORZADO:}
+  stock:
+    # Destinatario de la alerta de stock bajo. Vacio = solo se registra en el log.
+    alert-email: ${STOCK_ALERT_EMAIL:${GMAIL_USERNAME:}}
   roles:
     admin: ${APP_ROLES_ADMIN:}
     vendedor: ${APP_ROLES_VENDEDOR:}
+
+# ---------------------------------------------------------------------------
+# Contrato de mensajeria de Pedidos360 (identico en todos los microservicios).
+# Unico lugar donde se escriben nombres de exchanges, colas y routing keys.
+# Este servicio CONSUME orden.creada y stock.bajo.
+#
+#   ms-orden --orden.creada----> [pedidos.exchange: direct] --> orden.creada    --> ms-notificaciones (correo)
+#   ms-orden --stock.descontar-> [pedidos.exchange: direct] --> stock.descontar --> ms-productos (descuenta stock)
+#   ms-productos --stock.bajo--> [pedidos.eventos:  topic ] --> stock.bajo      --> ms-notificaciones (alerta)
+#   Mensaje rechazado en cualquier cola --> [pedidos.dlx: direct] --> <cola>.dlq
+# ---------------------------------------------------------------------------
+messaging:
+  exchanges:
+    direct: pedidos.exchange
+    topic: pedidos.eventos
+    dlx: pedidos.dlx
+  queues:
+    orden-creada: orden.creada
+    stock-descontar: stock.descontar
+    stock-bajo: stock.bajo
+  dlqs:
+    orden-creada: orden.creada.dlq
+    stock-descontar: stock.descontar.dlq
+    stock-bajo: stock.bajo.dlq
+  routing-keys:
+    orden-creada: orden.creada
+    stock-descontar: stock.descontar
+    stock-bajo: stock.bajo
+  retry:
+    max-attempts: ${MESSAGING_RETRY_MAX_ATTEMPTS:3}
+    backoff-ms: ${MESSAGING_RETRY_BACKOFF_MS:2000}
 
 # Parametros del IDaaS (Azure AD / Microsoft Entra ID).
 azure:
@@ -52,3 +91,8 @@ management:
     web:
       exposure:
         include: health,info
+  health:
+    # El indicador de correo abre una sesion SMTP en cada /actuator/health: sin credenciales (modo
+    # simulado) o con Gmail lento dejaria el servicio en DOWN. Se activa con MAIL_HEALTH_ENABLED=true.
+    mail:
+      enabled: ${MAIL_HEALTH_ENABLED:false}

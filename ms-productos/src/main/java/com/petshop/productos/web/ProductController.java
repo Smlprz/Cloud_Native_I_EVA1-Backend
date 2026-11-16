@@ -1,5 +1,6 @@
 package com.petshop.productos.web;
 
+import com.petshop.productos.messaging.kafka.NavegacionPublisher;
 import com.petshop.productos.service.ProductService;
 import com.petshop.productos.web.dto.ProductRequest;
 import com.petshop.productos.web.dto.ProductResponse;
@@ -7,6 +8,8 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -32,9 +35,11 @@ import java.util.List;
 public class ProductController {
 
     private final ProductService service;
+    private final NavegacionPublisher navegacion;
 
-    public ProductController(ProductService service) {
+    public ProductController(ProductService service, NavegacionPublisher navegacion) {
         this.service = service;
+        this.navegacion = navegacion;
     }
 
     @GetMapping
@@ -51,9 +56,23 @@ public class ProductController {
         return productos.stream().map(ProductResponse::from).toList();
     }
 
+    /**
+     * Detalle de un producto (publico). Cada visita se publica en Kafka (eventos.navegacion) para el analisis de
+     * navegacion y las recomendaciones; el usuario sale del JWT si lo hay, y si no queda como "anonimo".
+     */
     @GetMapping("/{id}")
-    public ProductResponse obtener(@PathVariable Long id) {
-        return ProductResponse.from(service.obtener(id));
+    public ProductResponse obtener(@PathVariable Long id, @AuthenticationPrincipal Jwt jwt) {
+        com.petshop.productos.domain.Product producto = service.obtener(id);
+        navegacion.productoVisto(usuarioDe(jwt), producto);
+        return ProductResponse.from(producto);
+    }
+
+    private static String usuarioDe(Jwt jwt) {
+        if (jwt == null) {
+            return "anonimo";
+        }
+        String oid = jwt.getClaimAsString("oid");
+        return oid != null ? oid : jwt.getSubject();
     }
 
     @PostMapping

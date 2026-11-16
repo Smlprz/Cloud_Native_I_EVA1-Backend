@@ -1,0 +1,87 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: ms-analytics-recommendations
+
+# ---------------------------------------------------------------------------
+# Kafka. Los nombres de topicos y consumer groups se definen UNA sola vez, aqui.
+#
+#   ms-productos --PRODUCTO_VISTO-------------> [eventos.navegacion] --> grupo analytics-recomendaciones (perfiles + recomendaciones)
+#   ms-carrito   --ITEM_AGREGADO/ELIMINADO/                           --> grupo analytics-metricas        (dashboard)
+#                  COMPRA_REALIZADA---------->  [eventos.navegacion]
+#   ms-pago      --PAGO_APROBADO/RECHAZADO/
+#                  FRAUDE_BLOQUEADO---------->  [eventos.pagos]       --> grupo analytics-metricas        (dashboard)
+#
+# Cada topico tiene 3 particiones: cada grupo levanta 3 consumidores (concurrency) y se reparten una particion
+# cada uno. Dos grupos distintos leen el mismo topico de forma independiente (cada uno con su propio offset).
+# ---------------------------------------------------------------------------
+kafka:
+  # Los 3 brokers: si uno cae, el cliente usa los otros (KAFKA_BOOTSTRAP_SERVERS=ip:9092,ip:9093,ip:9094).
+  bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092,localhost:9093,localhost:9094}
+  # false = no abre consumidores (pruebas sin broker).
+  listeners-enabled: ${KAFKA_LISTENERS_ENABLED:true}
+  topics:
+    navegacion: eventos.navegacion
+    pagos: eventos.pagos
+  groups:
+    recomendaciones: analytics-recomendaciones
+    metricas: analytics-metricas
+  consumer:
+    concurrency: ${KAFKA_CONSUMER_CONCURRENCY:3}
+    # Un grupo nuevo empieza desde el primer mensaje del topico.
+    auto-offset-reset: earliest
+    max-poll-records: 100
+    # Reintentos ante un error tecnico antes de saltar el mensaje y dejarlo en el log.
+    retry-attempts: ${KAFKA_RETRY_ATTEMPTS:3}
+    retry-backoff-ms: ${KAFKA_RETRY_BACKOFF_MS:1000}
+
+analytics:
+  # memory = en memoria (desarrollo/pruebas) | dynamodb = Amazon DynamoDB (nube)
+  store: ${ANALYTICS_STORE:memory}
+  dynamodb:
+    region: ${AWS_REGION:us-east-1}
+    # Solo para DynamoDB Local (desarrollo); en AWS se deja vacio y se usa el rol de la instancia.
+    endpoint: ${DYNAMODB_ENDPOINT:}
+    tabla-eventos: ${DYNAMODB_TABLA_EVENTOS:pedidos360_eventos}
+    tabla-perfiles: ${DYNAMODB_TABLA_PERFILES:pedidos360_perfiles}
+    crear-tablas: ${DYNAMODB_CREAR_TABLAS:true}
+  recomendaciones:
+    # Cuantos productos se devuelven por defecto.
+    limite: 4
+    # Cuanto tiempo se reutiliza el catalogo descargado de ms-productos.
+    catalogo-ttl-segundos: ${CATALOGO_TTL_SEGUNDOS:60}
+  metricas:
+    # Un usuario se cuenta como "activo" si interactuo en los ultimos N minutos.
+    usuarios-activos-minutos: 5
+
+services:
+  productos:
+    # El catalogo es publico: no se necesita token para leerlo.
+    base-url: ${PRODUCTOS_URL:http://localhost:8081}
+
+app:
+  roles:
+    admin: ${APP_ROLES_ADMIN:}
+    vendedor: ${APP_ROLES_VENDEDOR:}
+
+# Parametros del IDaaS (Azure AD / Microsoft Entra ID).
+azure:
+  jwk-set-uri: ${AZURE_JWK_SET_URI:https://login.microsoftonline.com/REEMPLAZAR_TENANT_ID/discovery/v2.0/keys}
+  issuer: ${AZURE_ISSUER:https://login.microsoftonline.com/REEMPLAZAR_TENANT_ID/v2.0}
+  audience: ${AZURE_AUDIENCE:api://REEMPLAZAR_CLIENT_ID}
+
+security:
+  cors:
+    allowed-origins: ${SECURITY_CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:3001}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true

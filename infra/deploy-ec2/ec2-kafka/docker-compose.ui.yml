@@ -1,0 +1,28 @@
+# KAFKA-UI: consola web para administrar brokers, topicos, particiones, consumer groups, offsets y lag.
+#
+#   sudo docker compose -f docker-compose.ui.yml up -d      (despues de levantar el cluster)
+#   Abrir  http://<ip-de-esta-EC2>:8090
+#
+# Se une a la red "pedidos360-kafka" que crea docker-compose.yml, y se conecta a los brokers por el
+# listener INTERNAL. Puerto 8090 solo desde tu IP en el Security Group.
+
+name: kafka-ui
+
+services:
+  kafka-ui:
+    image: provectuslabs/kafka-ui:v0.7.2
+    container_name: kafka-ui
+    restart: unless-stopped
+    ports:
+      - "8090:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: pedidos360
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka-1:29092,kafka-2:29092,kafka-3:29092
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper-1:2181,zookeeper-2:2181,zookeeper-3:2181
+      DYNAMIC_CONFIG_ENABLED: "true"
+      JAVA_OPTS: -Xms128m -Xmx384m
+
+networks:
+  default:
+    name: pedidos360-kafka
+    external: true

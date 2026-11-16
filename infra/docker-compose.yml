@@ -1,6 +1,8 @@
 # Entorno local completo de Pedidos360 (backend).
 #   - Una instancia MySQL con un esquema por microservicio (productos_db, carrito_db, auth_db).
-#   - Los tres microservicios Spring Boot (productos :8081, carrito :8082, auth :8083).
+#   - Cluster RabbitMQ de 2 nodos (incluido desde deploy-ec2/ec2-rabbitmq): panel en :15672 y :15673.
+#   - Microservicios Spring Boot: productos :8081, carrito :8082, auth :8083, notificaciones :8084,
+#     orden :8085, rabbit-admin :8087.
 #
 # En AWS cada microservicio va en su propia EC2 (ver infra/deploy-ec2/). Este compose
 # es el entorno de desarrollo "todo junto" en una maquina.
@@ -12,6 +14,9 @@
 # Los valores de Azure son placeholders: los servicios arrancan igual y responden
 # 401 en las rutas protegidas (util para las capturas de la evaluacion). Para
 # probar con tokens reales, exportar AZURE_* antes de levantar (ver docs/AZURE-AD-SETUP.md).
+
+include:
+  - path: deploy-ec2/ec2-rabbitmq/docker-compose.yml   # cluster RabbitMQ de 2 nodos
 
 services:
   mysql:
@@ -40,8 +45,13 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
+      rabbitmq-setup:
+        condition: service_completed_successfully
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/productos_db
+      SPRING_RABBITMQ_ADDRESSES: rabbitmq-1:5672,rabbitmq-2:5672
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_USER:-guest}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-guest}
       SPRING_DATASOURCE_USERNAME: pedidos
       SPRING_DATASOURCE_PASSWORD: pedidos
       AZURE_JWK_SET_URI: ${AZURE_JWK_SET_URI:-https://login.microsoftonline.com/e5372bf0-c5e3-4286-887c-79069f209c1f/discovery/v2.0/keys}
@@ -91,22 +101,6 @@ services:
     ports:
       - "8083:8080"
 
-  rabbitmq:
-    image: rabbitmq:3.13-management
-    container_name: pedidos360-rabbitmq
-    restart: unless-stopped
-    environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-guest}
-    ports:
-      - "5672:5672"
-      - "15672:15672"
-    healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-
   ms-orden:
     build: ../ms-orden
     container_name: pedidos360-ms-orden
@@ -114,13 +108,13 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
+      rabbitmq-setup:
+        condition: service_completed_successfully
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/orden_db
       SPRING_DATASOURCE_USERNAME: pedidos
       SPRING_DATASOURCE_PASSWORD: pedidos
-      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_ADDRESSES: rabbitmq-1:5672,rabbitmq-2:5672
       SPRING_RABBITMQ_USERNAME: ${RABBITMQ_USER:-guest}
       SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-guest}
       AZURE_JWK_SET_URI: ${AZURE_JWK_SET_URI:-https://login.microsoftonline.com/e5372bf0-c5e3-4286-887c-79069f209c1f/discovery/v2.0/keys}
@@ -135,10 +129,10 @@ services:
     container_name: pedidos360-ms-rabbit-admin
     restart: unless-stopped
     depends_on:
-      rabbitmq:
-        condition: service_healthy
+      rabbitmq-setup:
+        condition: service_completed_successfully
     environment:
-      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_ADDRESSES: rabbitmq-1:5672,rabbitmq-2:5672
       SPRING_RABBITMQ_USERNAME: ${RABBITMQ_USER:-guest}
       SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-guest}
       AZURE_JWK_SET_URI: ${AZURE_JWK_SET_URI:-https://login.microsoftonline.com/e5372bf0-c5e3-4286-887c-79069f209c1f/discovery/v2.0/keys}
@@ -154,10 +148,10 @@ services:
     container_name: pedidos360-ms-notificaciones
     restart: unless-stopped
     depends_on:
-      rabbitmq:
-        condition: service_healthy
+      rabbitmq-setup:
+        condition: service_completed_successfully
     environment:
-      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_ADDRESSES: rabbitmq-1:5672,rabbitmq-2:5672
       SPRING_RABBITMQ_USERNAME: ${RABBITMQ_USER:-guest}
       SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-guest}
       AZURE_JWK_SET_URI: ${AZURE_JWK_SET_URI:-https://login.microsoftonline.com/e5372bf0-c5e3-4286-887c-79069f209c1f/discovery/v2.0/keys}
@@ -167,6 +161,9 @@ services:
       # Cuenta Gmail que envia los correos + contrasena de aplicacion (16 caracteres,
       # se genera en la cuenta de Google con verificacion en 2 pasos activada).
       # Nunca hardcodear: se pasan como variables de entorno al levantar.
+      # Local: por defecto el correo se SIMULA (solo log). MAIL_SIMULADO=false + GMAIL_* para enviarlo de verdad.
+      MAIL_SIMULADO: ${MAIL_SIMULADO:-true}
+      STOCK_ALERT_EMAIL: ${STOCK_ALERT_EMAIL:-admin@pedidos360.local}
       GMAIL_USERNAME: ${GMAIL_USERNAME:-}
       GMAIL_APP_PASSWORD: ${GMAIL_APP_PASSWORD:-}
     ports:

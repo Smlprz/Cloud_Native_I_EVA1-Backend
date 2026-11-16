@@ -1,0 +1,8 @@
+azure:
+  jwk-set-uri: https://login.microsoftonline.com/common/discovery/v2.0/keys
+  issuer: https://login.microsoftonline.com/test-tenant/v2.0
+  audience: api://test-client-id
+
+security:
+  cors:
+    allowed-origins: http://localhost:3000

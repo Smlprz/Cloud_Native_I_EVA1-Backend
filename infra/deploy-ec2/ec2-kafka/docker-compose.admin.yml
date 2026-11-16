@@ -1,0 +1,31 @@
+# MS-KAFKA-ADMIN: API REST para crear, modificar y eliminar topicos y consultar consumer groups, offsets y lag.
+#
+#   sudo docker compose -f docker-compose.admin.yml up -d      (despues de levantar el cluster)
+#
+# Se une a la red "pedidos360-kafka" que crea docker-compose.yml y se conecta a los brokers por el listener
+# INTERNAL (kafka-1:29092...). Se expone en el puerto 8091 (el API Gateway enruta /kafka/* hacia aqui).
+# Security Group de esta EC2: abrir 8091.
+
+name: kafka-admin
+
+services:
+  ms-kafka-admin:
+    image: ${DOCKERHUB_USER:-tukionbush}/pedidos360-ms-kafka-admin:${IMAGE_TAG:-3.0}
+    container_name: pedidos360-ms-kafka-admin
+    restart: unless-stopped
+    environment:
+      JAVA_TOOL_OPTIONS: ${JAVA_TOOL_OPTIONS:--Xmx256m}
+      KAFKA_BOOTSTRAP_SERVERS: kafka-1:29092,kafka-2:29092,kafka-3:29092
+      AZURE_JWK_SET_URI: https://login.microsoftonline.com/e5372bf0-c5e3-4286-887c-79069f209c1f/discovery/v2.0/keys
+      AZURE_ISSUER: https://login.microsoftonline.com/e5372bf0-c5e3-4286-887c-79069f209c1f/v2.0
+      AZURE_AUDIENCE: ${AZURE_AUDIENCE:-api://054a13aa-d3c3-4155-9b83-d3b1c964d7ae}
+      SECURITY_CORS_ALLOWED_ORIGINS: ${FRONTEND_ORIGIN:-http://localhost:3000,http://localhost:3001,https://100-63-104-24.nip.io}
+      APP_ROLES_ADMIN: ${APP_ROLES_ADMIN:-}
+      APP_ROLES_VENDEDOR: ${APP_ROLES_VENDEDOR:-}
+    ports:
+      - "8091:8080"
+
+networks:
+  default:
+    name: pedidos360-kafka
+    external: true

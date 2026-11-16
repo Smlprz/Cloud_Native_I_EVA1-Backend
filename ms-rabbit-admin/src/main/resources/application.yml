@@ -6,10 +6,12 @@ spring:
     name: ms-rabbit-admin
 
   rabbitmq:
-    host: ${SPRING_RABBITMQ_HOST:localhost}
-    port: ${SPRING_RABBITMQ_PORT:5672}
+    # Cluster: SPRING_RABBITMQ_ADDRESSES="host1:5672,host2:5673" (el cliente prueba el siguiente
+    # nodo si uno cae). Si no se define, se usa un solo nodo con HOST/PORT como antes.
+    addresses: ${SPRING_RABBITMQ_ADDRESSES:${SPRING_RABBITMQ_HOST:localhost}:${SPRING_RABBITMQ_PORT:5672}}
     username: ${SPRING_RABBITMQ_USERNAME:guest}
     password: ${SPRING_RABBITMQ_PASSWORD:guest}
+    connection-timeout: 5s
 
 
 # Parametros del IDaaS (Azure AD / Microsoft Entra ID). Ver docs/AZURE-AD-SETUP.md.

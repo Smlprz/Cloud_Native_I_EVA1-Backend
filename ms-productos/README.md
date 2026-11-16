@@ -58,3 +58,20 @@ mvn test
 - `ProductRepositoryTest` — persistencia con base H2 en memoria.
 - `ProductControllerTest` — catálogo público + rechazo de escrituras sin token (401)
   o sin rol (403) y alta correcta con rol `VENDEDOR` (201).
+
+
+## Mensajería (RabbitMQ)
+
+**Consume `stock.descontar`** (cola `stock.descontar`, exchange direct `pedidos.exchange`), que publica
+`ms-orden` al crear una orden con ítems, y descuenta el stock (`StockService`).
+
+- **Todo o nada** por orden (una transacción) y **idempotente**: la tabla `stock_movimientos`
+  (migración `V3`) tiene `orden_id` único, así un mensaje duplicado no descuenta dos veces.
+- Producto inexistente o sin stock suficiente → error de negocio: no se reintenta, el mensaje va a
+  `stock.descontar.dlq` y queda en el log. Errores técnicos (BD caída) → hasta 3 reintentos y luego DLQ.
+- **Publica `stock.bajo`** en el exchange **topic** `pedidos.eventos` cuando un descuento deja un producto con
+  stock ≤ `app.stock.umbral-bajo` (5 por defecto, `STOCK_UMBRAL_BAJO`). `ms-notificaciones` avisa por correo.
+- Estructura: `messaging.config` (propiedades, topología, `RabbitTemplate`), `messaging.stock`
+  (consumidor y publicador), `messaging.support` (ACK/reintento/DLQ y parseo con validación).
+- Variables: `SPRING_RABBITMQ_ADDRESSES`, `SPRING_RABBITMQ_USERNAME`, `SPRING_RABBITMQ_PASSWORD`,
+  `MESSAGING_RETRY_MAX_ATTEMPTS`, `MESSAGING_RETRY_BACKOFF_MS`, `STOCK_UMBRAL_BAJO`.
