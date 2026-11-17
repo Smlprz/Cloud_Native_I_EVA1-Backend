@@ -18,6 +18,7 @@ analítica en tiempo real con **Apache Kafka** (3 Zookeeper + 3 brokers).
 | [`ms-rabbit-admin`](ms-rabbit-admin/) | 8087 | — | Administra RabbitMQ por REST: crea/elimina colas, exchanges y bindings. |
 | [`ms-pago`](ms-pago/) | 8088 | `pago_db` | Pago simulado de una orden con **antifraude** (misma tarjeta > 3 veces en 10 s se bloquea). **Publica en Kafka `eventos.pagos`**. |
 | [`ms-analytics-recommendations`](ms-analytics-recommendations/) | 8089 | DynamoDB | **Consume Kafka**: perfiles de navegación, **recomendaciones** y **métricas en tiempo real por WebSocket**. |
+| [`ms-cupones`](ms-cupones/) | 8092 | `cupones_db` | **Microservicio libre**: cupones de descuento. `ms-carrito` los aplica en el checkout (el total baja) y publica `CUPON_APLICADO` en Kafka. |
 | [`ms-kafka-admin`](ms-kafka-admin/) | 8091 | — | Administra Kafka por REST: crea, modifica y elimina tópicos y consulta consumer groups, offsets y lag. |
 
 Todos validan el JWT de Azure (firma vía JWKS + vigencia + `issuer` + `audience`).

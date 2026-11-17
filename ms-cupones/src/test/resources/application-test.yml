@@ -1,0 +1,28 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:cupones_test;MODE=MySQL;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+  flyway:
+    enabled: false
+
+# Las pruebas no publican en Kafka (no hay broker); la prueba del contrato usa Kafka embebido.
+kafka:
+  publish-enabled: false
+  bootstrap-servers: localhost:1
+
+azure:
+  jwk-set-uri: https://login.microsoftonline.com/common/discovery/v2.0/keys
+  issuer: https://login.microsoftonline.com/test-tenant/v2.0
+  audience: api://test-client-id
+
+security:
+  cors:
+    allowed-origins: http://localhost:3000

@@ -32,6 +32,13 @@ public class Pedido {
     @Column(name = "total", nullable = false, precision = 15, scale = 2)
     private BigDecimal total;
 
+    /** Descuento aplicado por un cupon (0 si no se uso). El total ya viene con el descuento restado. */
+    @Column(name = "descuento", nullable = false, precision = 15, scale = 2)
+    private BigDecimal descuento = BigDecimal.ZERO;
+
+    @Column(name = "cupon_codigo", length = 40)
+    private String cuponCodigo;
+
     @Column(name = "estado", nullable = false, length = 20)
     private String estado = "CONFIRMADO";
 
@@ -58,6 +65,21 @@ public class Pedido {
         this.total = items.stream()
                 .map(PedidoItem::getSubtotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    /** Resta el descuento de un cupon al total ya calculado; el total nunca queda negativo. */
+    public void aplicarDescuento(BigDecimal descuento, String cuponCodigo) {
+        this.descuento = descuento;
+        this.cuponCodigo = cuponCodigo;
+        this.total = this.total.subtract(descuento).max(BigDecimal.ZERO);
+    }
+
+    public BigDecimal getDescuento() {
+        return descuento;
+    }
+
+    public String getCuponCodigo() {
+        return cuponCodigo;
     }
 
     public Long getId() {

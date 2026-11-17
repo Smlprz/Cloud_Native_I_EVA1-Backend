@@ -84,7 +84,10 @@ public class CarritoController {
     @PreAuthorize("hasAuthority('SCOPE_carrito.write') and hasAnyRole('CLIENTE','ADMIN')")
     public PedidoResponse checkout(@AuthenticationPrincipal Jwt jwt,
                                    @Valid @RequestBody(required = false) CheckoutRequest request) {
-        PedidoResponse pedido = service.checkout(UsuarioActual.id(jwt));
+        String cupon = request != null ? request.cupon() : null;
+        PedidoResponse pedido = cupon != null && !cupon.isBlank()
+                ? service.checkout(UsuarioActual.id(jwt), cupon, jwt.getTokenValue())
+                : service.checkout(UsuarioActual.id(jwt));
         ordenes.registrarOrden(jwt.getTokenValue(), pedido, request != null ? request.email() : null);
         return pedido;
     }

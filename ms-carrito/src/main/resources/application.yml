@@ -27,6 +27,9 @@ spring:
 
 # Comunicacion entre microservicios (dentro de la red privada de AWS).
 services:
+  cupones:
+    # ms-cupones (opcional). Vacio = sin cupones: un checkout con cupon se rechaza con un mensaje claro.
+    base-url: ${CUPONES_URL:}
   productos:
     base-url: ${SERVICES_PRODUCTOS_BASE_URL:http://localhost:8081}
   # Vacio = no se registra la orden en ms-orden (la compra funciona igual).

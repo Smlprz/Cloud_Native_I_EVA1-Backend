@@ -1,5 +1,6 @@
 package com.petshop.carrito.service;
 
+import com.petshop.carrito.client.CuponesClient;
 import com.petshop.carrito.client.ProductoDto;
 import com.petshop.carrito.client.ProductosClient;
 import com.petshop.carrito.domain.Carrito;
@@ -29,15 +30,18 @@ public class CarritoService {
     private final PedidoRepository pedidoRepository;
     private final ProductosClient productosClient;
     private final NavegacionPublisher navegacion;
+    private final CuponesClient cupones;
 
     public CarritoService(CarritoRepository carritoRepository,
                           PedidoRepository pedidoRepository,
                           ProductosClient productosClient,
-                          NavegacionPublisher navegacion) {
+                          NavegacionPublisher navegacion,
+                          CuponesClient cupones) {
         this.carritoRepository = carritoRepository;
         this.pedidoRepository = pedidoRepository;
         this.productosClient = productosClient;
         this.navegacion = navegacion;
+        this.cupones = cupones;
     }
 
     @Transactional(readOnly = true)
@@ -98,6 +102,14 @@ public class CarritoService {
     }
 
     public PedidoResponse checkout(String usuarioId) {
+        return checkout(usuarioId, null, null);
+    }
+
+    /**
+     * Confirma el carrito. Con un cupon, ms-cupones lo valida y lo consume y el total del pedido baja. Si el cupon no
+     * sirve se lanza ReglaNegocioException ANTES de guardar nada: el carrito sigue abierto y se puede reintentar.
+     */
+    public PedidoResponse checkout(String usuarioId, String cuponCodigo, String bearerToken) {
         Carrito carrito = obtenerCarritoAbierto(usuarioId);
         if (carrito.getItems().isEmpty()) {
             throw new ReglaNegocioException("El carrito esta vacio");
@@ -110,6 +122,10 @@ public class CarritoService {
                 item.getPrecioUnitario(),
                 item.getCantidad())));
         pedido.recalcularTotal();
+        if (cuponCodigo != null && !cuponCodigo.isBlank()) {
+            CuponesClient.CuponAplicado cupon = cupones.aplicar(bearerToken, cuponCodigo.trim(), pedido.getTotal());
+            pedido.aplicarDescuento(cupon.descuento(), cupon.codigo());
+        }
 
         carrito.setEstado(Carrito.CONFIRMADO);
         carritoRepository.save(carrito);

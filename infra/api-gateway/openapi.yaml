@@ -529,3 +529,50 @@ paths:
         connectionType: INTERNET
         payloadFormatVersion: "1.0"
 
+  # =========================================================
+  #  Cupones de descuento  ->  ms-cupones :8092  /api/cupones
+  #  (POST /api/cupones/aplicar lo llama ms-carrito en el checkout por la red privada: no se expone en el gateway)
+  # =========================================================
+  /cupones:
+    get:
+      summary: Listar cupones (solo ADMIN)
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: GET
+        uri: "http://REEMPLAZAR_IP_CUPONES:8092/api/cupones"
+        connectionType: INTERNET
+        payloadFormatVersion: "1.0"
+    post:
+      summary: Crear un cupon (solo ADMIN)
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: POST
+        uri: "http://REEMPLAZAR_IP_CUPONES:8092/api/cupones"
+        connectionType: INTERNET
+        payloadFormatVersion: "1.0"
+
+  /cupones/validar:
+    post:
+      summary: Calcular el descuento de un cupon sin consumirlo
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: POST
+        uri: "http://REEMPLAZAR_IP_CUPONES:8092/api/cupones/validar"
+        connectionType: INTERNET
+        payloadFormatVersion: "1.0"
+
+  /cupones/{id}/activo:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    put:
+      summary: Activar o desactivar un cupon (solo ADMIN)
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: PUT
+        uri: "http://REEMPLAZAR_IP_CUPONES:8092/api/cupones/{id}/activo"
+        connectionType: INTERNET
+        payloadFormatVersion: "1.0"

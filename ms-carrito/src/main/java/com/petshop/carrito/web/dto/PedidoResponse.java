@@ -11,8 +11,15 @@ public record PedidoResponse(
         BigDecimal total,
         String estado,
         LocalDateTime creadoEn,
-        List<ItemResponse> items
+        List<ItemResponse> items,
+        BigDecimal descuento,
+        String cuponCodigo
 ) {
+
+    /** Pedido sin cupon (descuento 0). */
+    public PedidoResponse(Long id, BigDecimal total, String estado, LocalDateTime creadoEn, List<ItemResponse> items) {
+        this(id, total, estado, creadoEn, items, BigDecimal.ZERO, null);
+    }
 
     public record ItemResponse(
             Long productoId,
@@ -33,6 +40,6 @@ public record PedidoResponse(
                         i.getSubtotal()))
                 .toList();
         return new PedidoResponse(pedido.getId(), pedido.getTotal(), pedido.getEstado(),
-                pedido.getCreadoEn(), items);
+                pedido.getCreadoEn(), items, pedido.getDescuento(), pedido.getCuponCodigo());
     }
 }

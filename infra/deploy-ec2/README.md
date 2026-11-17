@@ -164,7 +164,7 @@ Se suman 3 microservicios (`ms-pago`, `ms-analytics-recommendations`, `ms-kafka-
 | 4 | `pedidos360-resenas-notif` | ms-resenas + ms-notificaciones | t3.small | 20 GB | 8086, 8084 |
 | 5 | `pedidos360-rabbitmq` | RabbitMQ (2 nodos) + ms-rabbit-admin | t3.small | 20 GB | 5672, 5673, 15672, 8087 |
 | 6 | `pedidos360-kafka` | 3 Zookeeper + 3 brokers + Kafka-UI + ms-kafka-admin | **t3.medium** | **30 GB** | 9092-9094, 8090, 8091 |
-| 7 | `pedidos360-analytics` | ms-analytics-recommendations | t3.small (+ rol IAM) | 20 GB | 8089 |
+| 7 | `pedidos360-analytics-cupones` | ms-analytics-recommendations + ms-cupones (`ec2-cupones`) | t3.small (+ rol IAM) | 20 GB | 8089, 8092 |
 | 8 | `pedidos360-frontend` | Caddy + React | t3.micro | 20 GB | 80, 443 |
 
 Cada instancia ejecuta la `docker-compose.yml` de su carpeta `ec2-*` (varias carpetas en la misma instancia = varios `docker compose` con proyectos distintos).
@@ -179,7 +179,7 @@ Medir con `docker stats` antes de la demostración.
 3. **Kafka**: `ec2-kafka` → `KAFKA_ADVERTISED_HOST=<ip-privada-de-esa-EC2> sudo -E docker compose up -d`. Esperar a que `kafka-setup` termine con
    `Exited (0)` (crea los 2 tópicos). Luego `docker compose -f docker-compose.ui.yml up -d` y `docker compose -f docker-compose.admin.yml up -d`.
 4. **ms-productos y ms-carrito** con `KAFKA_EC2_HOST=<ip-privada-kafka>` (publican eventos de navegación).
-5. **ms-pago** (`ORDENES_URL`, `PRODUCTOS_EC2_HOST`, `KAFKA_EC2_HOST`) y **ms-analytics** (`KAFKA_EC2_HOST`, `PRODUCTOS_URL`).
+5. **ms-pago** (`ORDENES_URL`, `PRODUCTOS_EC2_HOST`, `KAFKA_EC2_HOST`), **ms-analytics** (`KAFKA_EC2_HOST`, `PRODUCTOS_URL`) y **ms-cupones** (`PRODUCTOS_EC2_HOST`, `KAFKA_EC2_HOST`). Despues, en la EC2 de carrito, `CUPONES_URL=http://<ip-privada-cupones>:8092` y `docker compose up -d` de nuevo.
 6. **Frontend** con `ANALYTICS_UPSTREAM=<ip-privada-analytics>:8089` (Caddy reenvía el WebSocket `/ws/`).
 
 Usar siempre **IPs privadas** entre instancias (no cambian al reiniciar el lab) y las públicas solo para el navegador y el API Gateway.
@@ -199,7 +199,7 @@ Usar siempre **IPs privadas** entre instancias (no cambian al reiniciar el lab) 
 
 ## Rutas nuevas del API Gateway
 
-`/pagos`, `/analytics/recomendaciones|perfil|metricas`, `/kafka/**` (ver `infra/api-gateway/openapi.yaml`, con `REEMPLAZAR_IP_*`).
+`/pagos`, `/analytics/recomendaciones|perfil|metricas`, `/kafka/**`, `/cupones`, `/cupones/validar`, `/cupones/{id}/activo` (ver `infra/api-gateway/openapi.yaml`, con `REEMPLAZAR_IP_*`).
 Si la cuenta del laboratorio no permite importar el OpenAPI (`PUT /apis` denegado), crear las rutas a mano: una ruta `ANY /pagos`
 con el autorizador `azureJwt` y su integración HTTP, **más una ruta `OPTIONS` sin autorizador** (si no, el preflight de CORS responde 401).
 El WebSocket **no** pasa por el gateway: lo reenvía el Caddy del frontend.
@@ -212,4 +212,5 @@ El WebSocket **no** pasa por el gateway: lo reenvía el Caddy del frontend.
 | `KAFKA_ADVERTISED_HOST` | cluster Kafka | IP privada anunciada a los clientes externos |
 | `CARD_HASH_PEPPER` | pago | secreto para el hash de tarjetas (no cambiarlo después) |
 | `ANALYTICS_STORE` | analytics | `dynamodb` (nube) o `memory` |
+| `CUPONES_URL` | carrito | `http://<ip-privada-cupones>:8092` (vacio = sin cupones) |
 | `ANALYTICS_UPSTREAM` | frontend (Caddy) | `<ip-privada-analytics>:8089` |
