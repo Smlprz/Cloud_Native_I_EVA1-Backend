@@ -51,3 +51,20 @@ Para la demo del antifraude: pagar una orden con la tarjeta `4000 0000 0018 0002
 
 ## Despliegue
 `infra/deploy-ec2/ec2-pago/docker-compose.yml`. Ruta en el gateway: `/pagos`.
+
+## Webpay Plus
+
+Ademas del pago simulado, la orden se puede pagar con Webpay (ambiente de **integracion** de Transbank).
+
+| Metodo | Ruta | Que hace |
+|---|---|---|
+| POST | `/api/pagos/webpay/iniciar` `{ordenId}` | Antifraude, crea la transaccion y devuelve `url` y `token` |
+| POST | `/api/pagos/webpay/confirmar` `{token}` | Commit al volver de Webpay; registra el pago y publica el evento |
+| POST | `/api/pagos/webpay/anular` `{token}` | El usuario anulo en Webpay |
+
+**Antifraude en Webpay:** la tarjeta se escribe en Transbank y el comercio nunca la ve, por eso se cuenta por
+**id de usuario** (mas de 3 intentos en 10 segundos: 429, alerta y evento en `eventos.pagos`).
+El pago simulado mantiene la regla por tarjeta.
+
+Variables: `WEBPAY_RETURN_URL` (`<frontend>/pago/retorno`), `WEBPAY_BASE_URL`, `WEBPAY_COMMERCE_CODE`,
+`WEBPAY_API_KEY` (por defecto, las credenciales publicas de prueba de Transbank).

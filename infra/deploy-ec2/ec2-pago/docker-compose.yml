@@ -12,7 +12,7 @@
 
 services:
   ms-pago:
-    image: ${DOCKERHUB_USER:-tukionbush}/pedidos360-ms-pago:${IMAGE_TAG:-3.0}
+    image: ${DOCKERHUB_USER:-tukionbush}/pedidos360-ms-pago:${PAGO_IMAGE_TAG:-3.1}
     container_name: pedidos360-ms-pago
     restart: unless-stopped
     environment:
@@ -25,6 +25,8 @@ services:
       ANTIFRAUDE_MAX_INTENTOS: ${ANTIFRAUDE_MAX_INTENTOS:-3}
       ANTIFRAUDE_VENTANA_SEGUNDOS: ${ANTIFRAUDE_VENTANA_SEGUNDOS:-10}
       CARD_HASH_PEPPER: ${CARD_HASH_PEPPER:-pedidos360-pepper-solo-para-desarrollo}
+      # Webpay (ambiente de integracion). Pagina del frontend a la que Transbank devuelve al usuario.
+      WEBPAY_RETURN_URL: ${WEBPAY_RETURN_URL:-http://localhost:3000/pago/retorno}
       AZURE_JWK_SET_URI: https://login.microsoftonline.com/e5372bf0-c5e3-4286-887c-79069f209c1f/discovery/v2.0/keys
       AZURE_ISSUER: https://login.microsoftonline.com/e5372bf0-c5e3-4286-887c-79069f209c1f/v2.0
       AZURE_AUDIENCE: ${AZURE_AUDIENCE:-api://054a13aa-d3c3-4155-9b83-d3b1c964d7ae}

@@ -38,6 +38,13 @@ app:
     ventana-segundos: ${ANTIFRAUDE_VENTANA_SEGUNDOS:10}
     # Se mezcla con el numero de tarjeta antes de aplicar SHA-256 (el numero nunca se guarda).
     pepper: ${CARD_HASH_PEPPER:pedidos360-pepper-solo-para-desarrollo}
+  # Webpay Plus. Valores por defecto = ambiente de INTEGRACION con las credenciales publicas de prueba de Transbank.
+  webpay:
+    base-url: ${WEBPAY_BASE_URL:https://webpay3gint.transbank.cl}
+    commerce-code: ${WEBPAY_COMMERCE_CODE:597055555532}
+    api-key: ${WEBPAY_API_KEY:579B532A7440BB0C9079DED94D31EA1615BACEB56610332264630D42D0A36B1C}
+    # Pagina del frontend a la que Webpay devuelve al usuario.
+    return-url: ${WEBPAY_RETURN_URL:http://localhost:3000/pago/retorno}
   roles:
     admin: ${APP_ROLES_ADMIN:}
     vendedor: ${APP_ROLES_VENDEDOR:}

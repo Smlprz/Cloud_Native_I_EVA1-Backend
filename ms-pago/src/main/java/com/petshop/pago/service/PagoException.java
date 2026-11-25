@@ -20,6 +20,14 @@ public class PagoException extends RuntimeException {
         return new PagoException(HttpStatus.CONFLICT, "La orden " + ordenId + " ya fue pagada");
     }
 
+    public static PagoException bloqueadoPorFraude(String motivo) {
+        return new PagoException(HttpStatus.TOO_MANY_REQUESTS, motivo);
+    }
+
+    public static PagoException transaccionNoEncontrada() {
+        return new PagoException(HttpStatus.NOT_FOUND, "La transaccion de Webpay no existe o no es tuya");
+    }
+
     public HttpStatus getStatus() {
         return status;
     }

@@ -34,6 +34,13 @@ public class GlobalExceptionHandler {
         return ProblemDetail.forStatusAndDetail(ex.getStatus(), ex.getMessage());
     }
 
+    @ExceptionHandler(com.petshop.pago.webpay.WebpayNoDisponibleException.class)
+    public ProblemDetail webpayNoDisponible(com.petshop.pago.webpay.WebpayNoDisponibleException ex) {
+        log.error(ex.getMessage());
+        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_GATEWAY,
+                "Webpay no esta disponible en este momento, intenta nuevamente");
+    }
+
     @ExceptionHandler(OrdenesNoDisponibleException.class)
     public ProblemDetail ordenesNoDisponible(OrdenesNoDisponibleException ex) {
         log.error(ex.getMessage());
