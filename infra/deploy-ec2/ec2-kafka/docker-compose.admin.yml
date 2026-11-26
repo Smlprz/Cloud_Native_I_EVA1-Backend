@@ -11,6 +11,8 @@ name: kafka-admin
 services:
   ms-kafka-admin:
     image: ${DOCKERHUB_USER:-tukionbush}/pedidos360-ms-kafka-admin:${IMAGE_TAG:-3.0}
+    # Se construye en la EC2 desde el codigo del repo (docker compose up -d --build).
+    build: ../../../ms-kafka-admin
     container_name: pedidos360-ms-kafka-admin
     restart: unless-stopped
     environment:

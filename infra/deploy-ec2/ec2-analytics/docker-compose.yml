@@ -12,6 +12,8 @@
 services:
   ms-analytics:
     image: ${DOCKERHUB_USER:-tukionbush}/pedidos360-ms-analytics-recommendations:${IMAGE_TAG:-3.0}
+    # Se construye en la EC2 desde el codigo del repo (docker compose up -d --build).
+    build: ../../../ms-analytics-recommendations
     container_name: pedidos360-ms-analytics
     restart: unless-stopped
     environment:

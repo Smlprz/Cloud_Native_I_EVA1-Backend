@@ -16,6 +16,8 @@
 services:
   ms-pago:
     image: ${DOCKERHUB_USER:-tukionbush}/pedidos360-ms-pago:${PAGO_IMAGE_TAG:-3.1}
+    # Se construye en la EC2 desde el codigo del repo (docker compose up -d --build).
+    build: ../../../ms-pago
     container_name: pedidos360-ms-pago
     restart: unless-stopped
     environment:

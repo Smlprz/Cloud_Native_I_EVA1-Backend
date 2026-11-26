@@ -8,6 +8,8 @@
 services:
   ms-rabbit-admin:
     image: ${DOCKERHUB_USER:-tukionbush}/pedidos360-ms-rabbit-admin:${IMAGE_TAG:-3.0}
+    # Se construye en la EC2 desde el codigo del repo (docker compose up -d --build).
+    build: ../../../ms-rabbit-admin
     container_name: pedidos360-ms-rabbit-admin
     restart: unless-stopped
     environment:

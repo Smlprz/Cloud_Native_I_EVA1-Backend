@@ -10,6 +10,8 @@
 services:
   ms-cupones:
     image: ${DOCKERHUB_USER:-tukionbush}/pedidos360-ms-cupones:${IMAGE_TAG:-3.0}
+    # Se construye en la EC2 desde el codigo del repo (docker compose up -d --build).
+    build: ../../../ms-cupones
     container_name: pedidos360-ms-cupones
     restart: unless-stopped
     environment:
