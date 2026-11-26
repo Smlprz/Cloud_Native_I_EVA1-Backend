@@ -16,7 +16,7 @@ info:
 x-amazon-apigateway-cors:
   allowOrigins:
   - http://localhost:3000
-  - https://100-60-217-178.sslip.io
+  - http://100.50.134.6
   allowMethods:
   - GET
   - POST
@@ -50,7 +50,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: GET
-        uri: http://3.225.255.55:8081/api/productos
+        uri: http://98.84.230.38:8081/api/productos
         connectionType: INTERNET
         payloadFormatVersion: '1.0'
     post:
@@ -58,7 +58,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: POST
-        uri: http://3.225.255.55:8081/api/productos
+        uri: http://98.84.230.38:8081/api/productos
         connectionType: INTERNET
         payloadFormatVersion: '1.0'
   /productos/{id}:
@@ -74,7 +74,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: GET
-        uri: http://3.225.255.55:8081/api/productos/{id}
+        uri: http://98.84.230.38:8081/api/productos/{id}
         connectionType: INTERNET
         payloadFormatVersion: '1.0'
     put:
@@ -82,7 +82,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: PUT
-        uri: http://3.225.255.55:8081/api/productos/{id}
+        uri: http://98.84.230.38:8081/api/productos/{id}
         connectionType: INTERNET
         payloadFormatVersion: '1.0'
     delete:
@@ -90,7 +90,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: DELETE
-        uri: http://3.225.255.55:8081/api/productos/{id}
+        uri: http://98.84.230.38:8081/api/productos/{id}
         connectionType: INTERNET
         payloadFormatVersion: '1.0'
   /carrito:
@@ -99,7 +99,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: GET
-        uri: http://44.193.187.57:8082/api/carrito
+        uri: http://32.197.51.142:8082/api/carrito
         connectionType: INTERNET
         payloadFormatVersion: '1.0'
     delete:
@@ -107,7 +107,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: DELETE
-        uri: http://44.193.187.57:8082/api/carrito
+        uri: http://32.197.51.142:8082/api/carrito
         connectionType: INTERNET
         payloadFormatVersion: '1.0'
   /carrito/items:
@@ -116,7 +116,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: POST
-        uri: http://44.193.187.57:8082/api/carrito/items
+        uri: http://32.197.51.142:8082/api/carrito/items
         connectionType: INTERNET
         payloadFormatVersion: '1.0'
   /carrito/items/{itemId}:
@@ -131,7 +131,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: PUT
-        uri: http://44.193.187.57:8082/api/carrito/items/{itemId}
+        uri: http://32.197.51.142:8082/api/carrito/items/{itemId}
         connectionType: INTERNET
         payloadFormatVersion: '1.0'
     delete:
@@ -139,7 +139,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: DELETE
-        uri: http://44.193.187.57:8082/api/carrito/items/{itemId}
+        uri: http://32.197.51.142:8082/api/carrito/items/{itemId}
         connectionType: INTERNET
         payloadFormatVersion: '1.0'
   /carrito/checkout:
@@ -148,7 +148,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: POST
-        uri: http://44.193.187.57:8082/api/carrito/checkout
+        uri: http://32.197.51.142:8082/api/carrito/checkout
         connectionType: INTERNET
         payloadFormatVersion: '1.0'
   /carrito/pedidos:
@@ -157,7 +157,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: GET
-        uri: http://44.193.187.57:8082/api/carrito/pedidos
+        uri: http://32.197.51.142:8082/api/carrito/pedidos
         connectionType: INTERNET
         payloadFormatVersion: '1.0'
   /ordenes:
@@ -166,7 +166,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: GET
-        uri: http://54.89.45.189:8085/api/ordenes
+        uri: http://3.221.149.7:8085/api/ordenes
         connectionType: INTERNET
         payloadFormatVersion: '1.0'
   /resenas:
@@ -175,7 +175,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: GET
-        uri: http://100.48.3.123:8086/api/resenas
+        uri: http://98.84.230.38:8086/api/resenas
         connectionType: INTERNET
         payloadFormatVersion: '1.0'
     post:
@@ -183,7 +183,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: POST
-        uri: http://100.48.3.123:8086/api/resenas
+        uri: http://98.84.230.38:8086/api/resenas
         connectionType: INTERNET
         payloadFormatVersion: '1.0'
   /resenas/{id}:
@@ -198,7 +198,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: DELETE
-        uri: http://100.48.3.123:8086/api/resenas/{id}
+        uri: http://98.84.230.38:8086/api/resenas/{id}
         connectionType: INTERNET
         payloadFormatVersion: '1.0'
   /auth/me:
@@ -207,7 +207,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: GET
-        uri: http://35.170.38.245:8083/api/auth/me
+        uri: http://3.236.91.40:8083/api/auth/me
         connectionType: INTERNET
         payloadFormatVersion: '1.0'
   /rabbit/exchanges:
@@ -216,7 +216,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: POST
-        uri: http://34.235.89.235:8087/api/rabbit/exchanges
+        uri: http://3.222.42.156:8087/api/rabbit/exchanges
         connectionType: INTERNET
         payloadFormatVersion: '1.0'
   /rabbit/exchanges/{name}:
@@ -231,7 +231,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: DELETE
-        uri: http://34.235.89.235:8087/api/rabbit/exchanges/{name}
+        uri: http://3.222.42.156:8087/api/rabbit/exchanges/{name}
         connectionType: INTERNET
         payloadFormatVersion: '1.0'
   /rabbit/queues:
@@ -240,7 +240,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: POST
-        uri: http://34.235.89.235:8087/api/rabbit/queues
+        uri: http://3.222.42.156:8087/api/rabbit/queues
         connectionType: INTERNET
         payloadFormatVersion: '1.0'
   /rabbit/queues/{name}:
@@ -255,7 +255,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: GET
-        uri: http://34.235.89.235:8087/api/rabbit/queues/{name}
+        uri: http://3.222.42.156:8087/api/rabbit/queues/{name}
         connectionType: INTERNET
         payloadFormatVersion: '1.0'
     delete:
@@ -263,7 +263,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: DELETE
-        uri: http://34.235.89.235:8087/api/rabbit/queues/{name}
+        uri: http://3.222.42.156:8087/api/rabbit/queues/{name}
         connectionType: INTERNET
         payloadFormatVersion: '1.0'
   /rabbit/bindings:
@@ -272,7 +272,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: POST
-        uri: http://34.235.89.235:8087/api/rabbit/bindings
+        uri: http://3.222.42.156:8087/api/rabbit/bindings
         connectionType: INTERNET
         payloadFormatVersion: '1.0'
     delete:
@@ -280,7 +280,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: DELETE
-        uri: http://34.235.89.235:8087/api/rabbit/bindings
+        uri: http://3.222.42.156:8087/api/rabbit/bindings
         connectionType: INTERNET
         payloadFormatVersion: '1.0'
   /pagos:
@@ -289,7 +289,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: GET
-        uri: http://REEMPLAZAR_IP_PAGO:8088/api/pagos
+        uri: http://18.205.3.139:8088/api/pagos
         connectionType: INTERNET
         payloadFormatVersion: '1.0'
     post:
@@ -297,7 +297,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: POST
-        uri: http://REEMPLAZAR_IP_PAGO:8088/api/pagos
+        uri: http://18.205.3.139:8088/api/pagos
         connectionType: INTERNET
         payloadFormatVersion: '1.0'
   /pagos/bloqueo:
@@ -306,7 +306,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: GET
-        uri: http://REEMPLAZAR_IP_PAGO:8088/api/pagos/bloqueo
+        uri: http://18.205.3.139:8088/api/pagos/bloqueo
         connectionType: INTERNET
         payloadFormatVersion: '1.0'
   /pagos/alertas-fraude:
@@ -315,7 +315,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: GET
-        uri: http://REEMPLAZAR_IP_PAGO:8088/api/pagos/alertas-fraude
+        uri: http://18.205.3.139:8088/api/pagos/alertas-fraude
         connectionType: INTERNET
         payloadFormatVersion: '1.0'
   /pagos/webpay/iniciar:
@@ -324,7 +324,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: POST
-        uri: http://REEMPLAZAR_IP_PAGO:8088/api/pagos/webpay/iniciar
+        uri: http://18.205.3.139:8088/api/pagos/webpay/iniciar
         connectionType: INTERNET
         payloadFormatVersion: '1.0'
   /pagos/webpay/confirmar:
@@ -333,7 +333,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: POST
-        uri: http://REEMPLAZAR_IP_PAGO:8088/api/pagos/webpay/confirmar
+        uri: http://18.205.3.139:8088/api/pagos/webpay/confirmar
         connectionType: INTERNET
         payloadFormatVersion: '1.0'
   /pagos/webpay/anular:
@@ -342,7 +342,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: POST
-        uri: http://REEMPLAZAR_IP_PAGO:8088/api/pagos/webpay/anular
+        uri: http://18.205.3.139:8088/api/pagos/webpay/anular
         connectionType: INTERNET
         payloadFormatVersion: '1.0'
   /analytics/recomendaciones:
@@ -351,7 +351,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: GET
-        uri: http://REEMPLAZAR_IP_ANALYTICS:8089/api/analytics/recomendaciones
+        uri: http://44.193.52.211:8089/api/analytics/recomendaciones
         connectionType: INTERNET
         payloadFormatVersion: '1.0'
   /analytics/perfil:
@@ -360,7 +360,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: GET
-        uri: http://REEMPLAZAR_IP_ANALYTICS:8089/api/analytics/perfil
+        uri: http://44.193.52.211:8089/api/analytics/perfil
         connectionType: INTERNET
         payloadFormatVersion: '1.0'
   /analytics/metricas:
@@ -369,7 +369,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: GET
-        uri: http://REEMPLAZAR_IP_ANALYTICS:8089/api/analytics/metricas
+        uri: http://44.193.52.211:8089/api/analytics/metricas
         connectionType: INTERNET
         payloadFormatVersion: '1.0'
   /cupones:
@@ -378,7 +378,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: GET
-        uri: http://REEMPLAZAR_IP_CUPONES:8092/api/cupones
+        uri: http://32.197.51.142:8092/api/cupones
         connectionType: INTERNET
         payloadFormatVersion: '1.0'
     post:
@@ -386,7 +386,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: POST
-        uri: http://REEMPLAZAR_IP_CUPONES:8092/api/cupones
+        uri: http://32.197.51.142:8092/api/cupones
         connectionType: INTERNET
         payloadFormatVersion: '1.0'
   /cupones/validar:
@@ -395,7 +395,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: POST
-        uri: http://REEMPLAZAR_IP_CUPONES:8092/api/cupones/validar
+        uri: http://32.197.51.142:8092/api/cupones/validar
         connectionType: INTERNET
         payloadFormatVersion: '1.0'
   /cupones/{id}/activo:
@@ -410,6 +410,6 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: PUT
-        uri: http://REEMPLAZAR_IP_CUPONES:8092/api/cupones/{id}/activo
+        uri: http://32.197.51.142:8092/api/cupones/{id}/activo
         connectionType: INTERNET
         payloadFormatVersion: '1.0'
