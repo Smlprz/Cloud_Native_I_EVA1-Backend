@@ -1,15 +1,20 @@
 package com.petshop.resenas.web;
 
+import com.petshop.resenas.messaging.ResenaCreadaEvent;
+import com.petshop.resenas.messaging.ResenaPublisher;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -23,6 +28,9 @@ class ResenaControllerTest {
 
     @Autowired
     private MockMvc mvc;
+
+    @MockBean
+    private ResenaPublisher publisher;
 
     private static RequestPostProcessor cliente(String oid) {
         return jwt().jwt(j -> j.claim("oid", oid).claim("name", "Cliente " + oid)).authorities(
@@ -49,6 +57,7 @@ class ResenaControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"productoId\": 1, \"puntaje\": 5, \"comentario\": \"Excelente\"}"))
                 .andExpect(status().isCreated());
+        verify(publisher).publicar(any(ResenaCreadaEvent.class));
 
         mvc.perform(get("/api/resenas").param("productoId", "1").with(cliente("u1")))
                 .andExpect(status().isOk());

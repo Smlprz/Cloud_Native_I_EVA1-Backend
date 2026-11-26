@@ -1,6 +1,8 @@
 # EC2 - RESENAS (ms-resenas)
 #
-#   PRODUCTOS_EC2_HOST=<ip-o-dns-de-la-ec2-de-productos> sudo docker compose up -d
+#   PRODUCTOS_EC2_HOST=<ip-o-dns-de-la-ec2-de-productos> RABBITMQ_EC2_HOST=<ip-ec2-rabbitmq> sudo -E docker compose up -d
+#
+# Publica cada resena nueva en la cola resena.creada (RabbitMQ); ms-productos actualiza la calificacion.
 #
 # Se conecta a la MySQL que vive en la EC2 de productos (esquema resenas_db).
 # Antes de levantarlo, crear el esquema en esa MySQL (ver README de ms-resenas).
@@ -15,6 +17,9 @@ services:
       SPRING_DATASOURCE_URL: jdbc:mysql://${PRODUCTOS_EC2_HOST}:3307/resenas_db
       SPRING_DATASOURCE_USERNAME: pedidos
       SPRING_DATASOURCE_PASSWORD: pedidos
+      SPRING_RABBITMQ_ADDRESSES: ${RABBITMQ_EC2_HOST:-localhost}:5672,${RABBITMQ_EC2_HOST:-localhost}:5673
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_USER:-guest}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-guest}
       AZURE_JWK_SET_URI: https://login.microsoftonline.com/e5372bf0-c5e3-4286-887c-79069f209c1f/discovery/v2.0/keys
       AZURE_ISSUER: https://login.microsoftonline.com/e5372bf0-c5e3-4286-887c-79069f209c1f/v2.0
       AZURE_AUDIENCE: ${AZURE_AUDIENCE:-api://054a13aa-d3c3-4155-9b83-d3b1c964d7ae}

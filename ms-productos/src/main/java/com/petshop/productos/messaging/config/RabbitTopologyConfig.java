@@ -15,6 +15,7 @@ import org.springframework.context.annotation.Configuration;
  * no contiene logica de negocio. Los nombres vienen de {@link MessagingProperties}.
  *
  *   pedidos.exchange (direct) --stock.descontar--> stock.descontar --(rechazo)--> pedidos.dlx --> stock.descontar.dlq
+ *   pedidos.exchange (direct) --resena.creada-->   resena.creada   --(rechazo)--> pedidos.dlx --> resena.creada.dlq
  *
  * ms-productos tambien PUBLICA stock.bajo en el exchange topic pedidos.eventos (lo consume
  * ms-notificaciones, que declara esa cola), por eso declara tambien ese exchange.
@@ -76,5 +77,34 @@ public class RabbitTopologyConfig {
         return BindingBuilder.bind(stockDescontarDlq())
                 .to(deadLetterExchange())
                 .with(props.dlqs().stockDescontar());
+    }
+
+    // ---------- Cola de resenas nuevas (consumida por este servicio) y su DLQ ----------
+
+    @Bean
+    public Queue resenaCreadaQueue() {
+        return QueueBuilder.durable(props.queues().resenaCreada())
+                .withArgument(DEAD_LETTER_EXCHANGE_ARG, props.exchanges().dlx())
+                .withArgument(DEAD_LETTER_ROUTING_KEY_ARG, props.dlqs().resenaCreada())
+                .build();
+    }
+
+    @Bean
+    public Queue resenaCreadaDlq() {
+        return QueueBuilder.durable(props.dlqs().resenaCreada()).build();
+    }
+
+    @Bean
+    public Binding resenaCreadaBinding() {
+        return BindingBuilder.bind(resenaCreadaQueue())
+                .to(directExchange())
+                .with(props.routingKeys().resenaCreada());
+    }
+
+    @Bean
+    public Binding resenaCreadaDlqBinding() {
+        return BindingBuilder.bind(resenaCreadaDlq())
+                .to(deadLetterExchange())
+                .with(props.dlqs().resenaCreada());
     }
 }

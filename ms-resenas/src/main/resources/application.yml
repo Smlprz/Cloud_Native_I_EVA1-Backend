@@ -21,6 +21,39 @@ spring:
     enabled: true
     locations: classpath:db/migration
 
+  rabbitmq:
+    addresses: ${SPRING_RABBITMQ_ADDRESSES:${SPRING_RABBITMQ_HOST:localhost}:${SPRING_RABBITMQ_PORT:5672}}
+    username: ${SPRING_RABBITMQ_USERNAME:guest}
+    password: ${SPRING_RABBITMQ_PASSWORD:guest}
+    connection-timeout: 5s
+    publisher-confirm-type: correlated
+    publisher-returns: true
+
+# ms-resenas --resena.creada--> [pedidos.exchange : direct] --> resena.creada --> ms-productos (calificacion)
+messaging:
+  exchanges:
+    direct: pedidos.exchange
+    topic: pedidos.eventos
+    dlx: pedidos.dlx
+  queues:
+    orden-creada: orden.creada
+    stock-descontar: stock.descontar
+    stock-bajo: stock.bajo
+    resena-creada: resena.creada
+  dlqs:
+    orden-creada: orden.creada.dlq
+    stock-descontar: stock.descontar.dlq
+    stock-bajo: stock.bajo.dlq
+    resena-creada: resena.creada.dlq
+  routing-keys:
+    orden-creada: orden.creada
+    stock-descontar: stock.descontar
+    stock-bajo: stock.bajo
+    resena-creada: resena.creada
+  retry:
+    max-attempts: ${MESSAGING_RETRY_MAX_ATTEMPTS:3}
+    backoff-ms: ${MESSAGING_RETRY_BACKOFF_MS:2000}
+
 # Parametros del IDaaS (Azure AD / Microsoft Entra ID). Ver docs/AZURE-AD-SETUP.md.
 azure:
   jwk-set-uri: ${AZURE_JWK_SET_URI:https://login.microsoftonline.com/REEMPLAZAR_TENANT_ID/discovery/v2.0/keys}
@@ -40,7 +73,10 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,prometheus
+  metrics:
+    tags:
+      application: ${spring.application.name}
   endpoint:
     health:
       probes:

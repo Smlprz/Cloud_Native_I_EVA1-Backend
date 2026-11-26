@@ -12,6 +12,7 @@
 #   22                      solo desde tu IP
 #   5672 y 5673 (AMQP)      solo desde las EC2 de los microservicios (o el rango de la VPC)
 #   15672 y 15673 (panel)   solo desde tu IP
+#   15692 y 15693 (metricas) solo desde la EC2 de telemetria
 # Los microservicios se conectan a ambos nodos:
 #   SPRING_RABBITMQ_ADDRESSES=<ip-ec2-rabbitmq>:5672,<ip-ec2-rabbitmq>:5673
 
@@ -24,6 +25,7 @@ services:
     ports:
       - "5672:5672"      # AMQP
       - "15672:15672"    # Panel web de administracion
+      - "15692:15692"    # Metricas para Prometheus (plugin rabbitmq_prometheus)
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-guest}
@@ -46,6 +48,7 @@ services:
     ports:
       - "5673:5672"      # AMQP (mapeado a 5673 en el host)
       - "15673:15672"    # Panel web de administracion
+      - "15693:15692"    # Metricas para Prometheus
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-guest}

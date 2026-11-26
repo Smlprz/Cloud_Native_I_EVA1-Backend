@@ -1,0 +1,50 @@
+# EC2 - TELEMETRIA (Prometheus + Grafana)
+#
+#   1) Generar la lista de servicios a observar (IP privadas):
+#        PRODUCTOS_HOST=<ip> CARRITO_HOST=<ip> AUTH_HOST=<ip> NOTIFICACIONES_HOST=<ip> \
+#        ORDEN_HOST=<ip> RESENAS_HOST=<ip> RABBIT_ADMIN_HOST=<ip> PAGO_HOST=<ip> \
+#        ANALYTICS_HOST=<ip> KAFKA_ADMIN_HOST=<ip> CUPONES_HOST=<ip> RABBITMQ_HOST=<ip> sh generar-targets.sh
+#   2) Levantar:
+#        GRAFANA_ADMIN_PASSWORD=<clave> sudo -E docker compose up -d
+#
+# Cada microservicio expone sus metricas en /actuator/prometheus (Micrometer).
+# Grafana trae la fuente Prometheus y el dashboard "Pedidos360 - Microservicios" ya cargados.
+# Security Group:
+#   - 9090 (Prometheus) y 3000 (Grafana) solo desde tu IP.
+#   - Esta EC2 debe poder llegar a 8081-8092 y 15692-15693 de las demas (mismo Security Group).
+
+services:
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: pedidos360-prometheus
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=7d
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./targets:/etc/prometheus/targets:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    container_name: pedidos360-grafana
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?Falta GRAFANA_ADMIN_PASSWORD}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - ../../telemetria/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ../../telemetria/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+
+volumes:
+  prometheus_data:
+  grafana_data:

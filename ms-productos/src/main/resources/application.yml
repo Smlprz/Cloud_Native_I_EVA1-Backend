@@ -69,7 +69,10 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,prometheus
+  metrics:
+    tags:
+      application: ${spring.application.name}
   endpoint:
     health:
       probes:
@@ -94,14 +97,17 @@ messaging:
     orden-creada: orden.creada
     stock-descontar: stock.descontar
     stock-bajo: stock.bajo
+    resena-creada: resena.creada
   dlqs:
     orden-creada: orden.creada.dlq
     stock-descontar: stock.descontar.dlq
     stock-bajo: stock.bajo.dlq
+    resena-creada: resena.creada.dlq
   routing-keys:
     orden-creada: orden.creada
     stock-descontar: stock.descontar
     stock-bajo: stock.bajo
+    resena-creada: resena.creada
   retry:
     max-attempts: ${MESSAGING_RETRY_MAX_ATTEMPTS:3}
     backoff-ms: ${MESSAGING_RETRY_BACKOFF_MS:2000}

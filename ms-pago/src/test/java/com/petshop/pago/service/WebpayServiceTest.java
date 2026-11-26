@@ -1,6 +1,8 @@
 package com.petshop.pago.service;
 
+import com.petshop.pago.antifraude.Antifraude;
 import com.petshop.pago.antifraude.DetectorFraude;
+import com.petshop.pago.antifraude.InMemoryBloqueoStore;
 import com.petshop.pago.client.OrdenDto;
 import com.petshop.pago.client.OrdenesClient;
 import com.petshop.pago.domain.EstadoPago;
@@ -16,6 +18,7 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.Optional;
@@ -42,8 +45,10 @@ class WebpayServiceTest {
 
     @BeforeEach
     void preparar() {
-        DetectorFraude detector = new DetectorFraude(3, 10, Clock.fixed(Instant.EPOCH, ZoneOffset.UTC));
-        service = new WebpayService(webpay, transacciones, pagos, alertas, ordenes, detector, publicador,
+        Clock reloj = Clock.fixed(Instant.EPOCH, ZoneOffset.UTC);
+        Antifraude antifraude = new Antifraude(new DetectorFraude(3, 60, reloj), new InMemoryBloqueoStore(),
+                null, "pagos.intentos", Duration.ofMinutes(15), reloj);
+        service = new WebpayService(webpay, transacciones, pagos, alertas, ordenes, antifraude, publicador,
                 "pepper", "http://localhost:3000/pago/retorno");
         when(ordenes.buscar(anyLong(), anyString()))
                 .thenReturn(Optional.of(new OrdenDto(7L, new BigDecimal("5000.00"), "CREADA")));

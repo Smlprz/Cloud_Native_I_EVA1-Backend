@@ -46,6 +46,12 @@ public class Product {
     @Column(name = "id_vendedor")
     private Long idVendedor;
 
+    @Column(name = "resenas_cantidad", nullable = false)
+    private int resenasCantidad;
+
+    @Column(name = "calificacion_promedio", precision = 3, scale = 2)
+    private BigDecimal calificacionPromedio;
+
     @CreationTimestamp
     @Column(name = "creado_en", updatable = false)
     private LocalDateTime creadoEn;
@@ -134,5 +140,22 @@ public class Product {
 
     public LocalDateTime getActualizadoEn() {
         return actualizadoEn;
+    }
+
+    public int getResenasCantidad() {
+        return resenasCantidad;
+    }
+
+    public BigDecimal getCalificacionPromedio() {
+        return calificacionPromedio;
+    }
+
+    /** Suma un puntaje (1 a 5) al promedio de calificaciones del producto. */
+    public void agregarCalificacion(int puntaje) {
+        BigDecimal total = calificacionPromedio == null ? BigDecimal.ZERO
+                : calificacionPromedio.multiply(BigDecimal.valueOf(resenasCantidad));
+        resenasCantidad++;
+        calificacionPromedio = total.add(BigDecimal.valueOf(puntaje))
+                .divide(BigDecimal.valueOf(resenasCantidad), 2, java.math.RoundingMode.HALF_UP);
     }
 }

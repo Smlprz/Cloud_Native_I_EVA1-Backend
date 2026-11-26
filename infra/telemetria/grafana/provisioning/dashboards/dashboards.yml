@@ -1,0 +1,9 @@
+# Grafana carga los dashboards JSON de /var/lib/grafana/dashboards al arrancar.
+apiVersion: 1
+providers:
+  - name: pedidos360
+    folder: Pedidos360
+    type: file
+    disableDeletion: true
+    options:
+      path: /var/lib/grafana/dashboards

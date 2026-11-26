@@ -1,6 +1,6 @@
 package com.petshop.pago.service;
 
-import com.petshop.pago.antifraude.DetectorFraude;
+import com.petshop.pago.antifraude.Antifraude;
 import com.petshop.pago.client.OrdenDto;
 import com.petshop.pago.client.OrdenesClient;
 import com.petshop.pago.domain.AlertaFraude;
@@ -14,6 +14,7 @@ import com.petshop.pago.repository.WebpayTransaccionRepository;
 import com.petshop.pago.web.dto.PagoResponse;
 import com.petshop.pago.web.dto.WebpayInicioResponse;
 import com.petshop.pago.webpay.WebpayClient;
+import io.micrometer.core.instrument.Metrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -43,13 +44,13 @@ public class WebpayService {
     private final PagoRepository pagos;
     private final AlertaFraudeRepository alertas;
     private final OrdenesClient ordenes;
-    private final DetectorFraude detector;
+    private final Antifraude antifraude;
     private final PagoEventPublisher publicador;
     private final String pepper;
     private final String returnUrl;
 
     public WebpayService(WebpayClient webpay, WebpayTransaccionRepository transacciones, PagoRepository pagos,
-                         AlertaFraudeRepository alertas, OrdenesClient ordenes, DetectorFraude detector,
+                         AlertaFraudeRepository alertas, OrdenesClient ordenes, Antifraude antifraude,
                          PagoEventPublisher publicador,
                          @Value("${app.antifraude.pepper}") String pepper,
                          @Value("${app.webpay.return-url}") String returnUrl) {
@@ -58,7 +59,7 @@ public class WebpayService {
         this.pagos = pagos;
         this.alertas = alertas;
         this.ordenes = ordenes;
-        this.detector = detector;
+        this.antifraude = antifraude;
         this.publicador = publicador;
         this.pepper = pepper;
         this.returnUrl = returnUrl;
@@ -69,17 +70,17 @@ public class WebpayService {
                 .orElseThrow(() -> PagoException.ordenNoEncontrada(ordenId));
         String huellaUsuario = TarjetaUtil.hash("usuario:" + usuarioId, pepper);
 
-        DetectorFraude.Resultado intento = detector.registrarIntento("usuario:" + usuarioId);
+        Antifraude.Resultado intento = antifraude.evaluar(usuarioId, orden.id());
         if (intento.bloqueado()) {
-            String motivo = "El mismo usuario intento pagar " + intento.intentosEnVentana() + " veces en "
-                    + detector.getVentanaSegundos() + " segundos: transaccion bloqueada por seguridad";
+            String motivo = antifraude.motivo(intento.hasta());
             alertas.save(new AlertaFraude(usuarioId, orden.id(), SIN_TARJETA, huellaUsuario,
-                    intento.intentosEnVentana(), detector.getVentanaSegundos()));
+                    antifraude.getMaxIntentos() + 1, antifraude.getVentanaSegundos()));
             Pago bloqueado = pagos.save(new Pago(orden.id(), usuarioId, orden.total(), SIN_TARJETA, huellaUsuario,
                     EstadoPago.BLOQUEADO_FRAUDE, motivo));
+            Metrics.counter("pedidos360.pagos", "estado", EstadoPago.BLOQUEADO_FRAUDE.name()).increment();
             publicador.publicar(bloqueado);
-            log.warn("ALERTA DE FRAUDE (Webpay): usuario {} con {} intentos en {} s, orden {}. Transaccion bloqueada.",
-                    usuarioId, intento.intentosEnVentana(), detector.getVentanaSegundos(), orden.id());
+            log.warn("Pago Webpay bloqueado por antifraude: usuario {} (bloqueado hasta {}), orden {}",
+                    usuarioId, intento.hasta(), orden.id());
             throw PagoException.bloqueadoPorFraude(motivo);
         }
         if (pagos.existsByOrdenIdAndEstado(orden.id(), EstadoPago.APROBADO)) {

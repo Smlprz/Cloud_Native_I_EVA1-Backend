@@ -373,6 +373,67 @@ paths:
         connectionType: INTERNET
         payloadFormatVersion: "1.0"
 
+  /pagos/bloqueo:
+    get:
+      summary: Bloqueo antifraude del usuario (bloqueado, hasta)
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: GET
+        uri: http://REEMPLAZAR_IP_PAGO:8088/api/pagos/bloqueo
+        connectionType: INTERNET
+        payloadFormatVersion: '1.0'
+  /pagos/alertas-fraude:
+    get:
+      summary: Alertas de fraude (solo ADMIN)
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: GET
+        uri: http://REEMPLAZAR_IP_PAGO:8088/api/pagos/alertas-fraude
+        connectionType: INTERNET
+        payloadFormatVersion: '1.0'
+  /pagos/webpay/iniciar:
+    post:
+      summary: Iniciar pago con Webpay Plus
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: POST
+        uri: http://REEMPLAZAR_IP_PAGO:8088/api/pagos/webpay/iniciar
+        connectionType: INTERNET
+        payloadFormatVersion: '1.0'
+  /pagos/webpay/confirmar:
+    post:
+      summary: Confirmar pago Webpay (retorno de Transbank)
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: POST
+        uri: http://REEMPLAZAR_IP_PAGO:8088/api/pagos/webpay/confirmar
+        connectionType: INTERNET
+        payloadFormatVersion: '1.0'
+  /pagos/webpay/anular:
+    post:
+      summary: Anular pago Webpay (el usuario cancelo)
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: POST
+        uri: http://REEMPLAZAR_IP_PAGO:8088/api/pagos/webpay/anular
+        connectionType: INTERNET
+        payloadFormatVersion: '1.0'
+  /pagos/bloqueos/{usuarioId}:
+    parameters:
+    - name: usuarioId
+      in: path
+      required: true
+      schema:
+        type: string
+    delete:
+      summary: Desbloquear a un usuario (solo ADMIN)
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: DELETE
+        uri: http://REEMPLAZAR_IP_PAGO:8088/api/pagos/bloqueos/{usuarioId}
+        connectionType: INTERNET
+        payloadFormatVersion: '1.0'
+
   # =========================================================
   #  Analitica y recomendaciones (Kafka)  ->  ms-analytics-recommendations :8089  /api/analytics
   #  Las metricas en tiempo real llegan por WebSocket (/ws/metricas), que el Caddy del frontend reenvia: el

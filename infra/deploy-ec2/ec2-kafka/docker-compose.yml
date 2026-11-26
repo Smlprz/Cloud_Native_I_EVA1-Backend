@@ -18,6 +18,7 @@
 # Topicos (3 particiones, 3 replicas, min.insync.replicas=2: soportan la caida de 1 broker sin perder datos):
 #   eventos.navegacion   clickstream (ver producto, carrito, cupon, envio). Retencion 7 dias.
 #   eventos.pagos        resultado de los pagos y alertas de fraude. Retencion 30 dias.
+#   pagos.intentos       cada intento de compra; lo cuenta el antifraude de ms-pago. Retencion 1 dia.
 
 name: kafka-cluster
 
@@ -128,7 +129,7 @@ services:
     volumes:
       - kafka_data_3:/var/lib/kafka/data
 
-  # Tarea de un solo uso: crea los 2 topicos (idempotente: --if-not-exists). Termina con "Exited (0)".
+  # Tarea de un solo uso: crea los 3 topicos (idempotente: --if-not-exists). Termina con "Exited (0)".
   kafka-setup:
     image: confluentinc/cp-kafka:7.6.1
     container_name: kafka-setup
@@ -151,6 +152,9 @@ services:
         kafka-topics --bootstrap-server $$BS --create --if-not-exists --topic eventos.pagos \
           --partitions 3 --replication-factor 3 \
           --config retention.ms=2592000000 --config cleanup.policy=delete --config min.insync.replicas=2
+        kafka-topics --bootstrap-server $$BS --create --if-not-exists --topic pagos.intentos \
+          --partitions 3 --replication-factor 3 \
+          --config retention.ms=86400000 --config cleanup.policy=delete --config min.insync.replicas=2
         echo "Topicos creados:"
         kafka-topics --bootstrap-server $$BS --describe
 

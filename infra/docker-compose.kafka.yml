@@ -75,9 +75,13 @@ services:
       SPRING_DATASOURCE_USERNAME: pedidos
       SPRING_DATASOURCE_PASSWORD: pedidos
       ORDENES_URL: ${ORDENES_URL:-http://host.docker.internal:8085}
+      ANTIFRAUDE_STORE: dynamodb
+      DYNAMODB_ENDPOINT: http://dynamodb-local:8000
+    depends_on:
+      - dynamodb-local
     ports:
       - "8088:8080"
-    networks: [kafka]
+    networks: [default, kafka]
 
   ms-cupones:
     build: ../ms-cupones

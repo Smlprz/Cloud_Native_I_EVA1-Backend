@@ -47,6 +47,11 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
+        <!-- Metricas para Prometheus en /actuator/prometheus -->
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
+        </dependency>
         <!-- Mensajeria asincrona: consume stock.descontar y publica stock.bajo en RabbitMQ -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

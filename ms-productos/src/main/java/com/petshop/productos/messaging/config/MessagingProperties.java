@@ -19,14 +19,14 @@ public record MessagingProperties(
     public record Exchanges(String direct, String topic, String dlx) {
     }
 
-    public record Queues(String ordenCreada, String stockDescontar, String stockBajo) {
+    public record Queues(String ordenCreada, String stockDescontar, String stockBajo, String resenaCreada) {
     }
 
     /** Cola de mensajes muertos de cada cola. Su nombre es tambien la routing key en el DLX. */
-    public record Dlqs(String ordenCreada, String stockDescontar, String stockBajo) {
+    public record Dlqs(String ordenCreada, String stockDescontar, String stockBajo, String resenaCreada) {
     }
 
-    public record RoutingKeys(String ordenCreada, String stockDescontar, String stockBajo) {
+    public record RoutingKeys(String ordenCreada, String stockDescontar, String stockBajo, String resenaCreada) {
     }
 
     /** Reintentos locales de un consumidor antes de enviar el mensaje a la DLQ. */

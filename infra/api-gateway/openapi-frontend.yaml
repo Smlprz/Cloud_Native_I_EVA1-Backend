@@ -38,8 +38,8 @@ components:
         jwtConfiguration:
           issuer: https://login.microsoftonline.com/e5372bf0-c5e3-4286-887c-79069f209c1f/v2.0
           audience:
-          - api://ce3e5b61-0b01-4a67-a42b-f15ccb364024
-          - ce3e5b61-0b01-4a67-a42b-f15ccb364024
+          - api://054a13aa-d3c3-4155-9b83-d3b1c964d7ae
+          - 054a13aa-d3c3-4155-9b83-d3b1c964d7ae
 security:
 - azureJwt: []
 paths:
@@ -281,5 +281,135 @@ paths:
         type: http_proxy
         httpMethod: DELETE
         uri: http://34.235.89.235:8087/api/rabbit/bindings
+        connectionType: INTERNET
+        payloadFormatVersion: '1.0'
+  /pagos:
+    get:
+      summary: Pagos del usuario (?ordenId=)
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: GET
+        uri: http://REEMPLAZAR_IP_PAGO:8088/api/pagos
+        connectionType: INTERNET
+        payloadFormatVersion: '1.0'
+    post:
+      summary: Pagar una orden (el monto sale de la orden)
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: POST
+        uri: http://REEMPLAZAR_IP_PAGO:8088/api/pagos
+        connectionType: INTERNET
+        payloadFormatVersion: '1.0'
+  /pagos/bloqueo:
+    get:
+      summary: Bloqueo antifraude del usuario (bloqueado, hasta)
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: GET
+        uri: http://REEMPLAZAR_IP_PAGO:8088/api/pagos/bloqueo
+        connectionType: INTERNET
+        payloadFormatVersion: '1.0'
+  /pagos/alertas-fraude:
+    get:
+      summary: Alertas de fraude (solo ADMIN)
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: GET
+        uri: http://REEMPLAZAR_IP_PAGO:8088/api/pagos/alertas-fraude
+        connectionType: INTERNET
+        payloadFormatVersion: '1.0'
+  /pagos/webpay/iniciar:
+    post:
+      summary: Iniciar pago con Webpay Plus
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: POST
+        uri: http://REEMPLAZAR_IP_PAGO:8088/api/pagos/webpay/iniciar
+        connectionType: INTERNET
+        payloadFormatVersion: '1.0'
+  /pagos/webpay/confirmar:
+    post:
+      summary: Confirmar pago Webpay (retorno de Transbank)
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: POST
+        uri: http://REEMPLAZAR_IP_PAGO:8088/api/pagos/webpay/confirmar
+        connectionType: INTERNET
+        payloadFormatVersion: '1.0'
+  /pagos/webpay/anular:
+    post:
+      summary: Anular pago Webpay (el usuario cancelo)
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: POST
+        uri: http://REEMPLAZAR_IP_PAGO:8088/api/pagos/webpay/anular
+        connectionType: INTERNET
+        payloadFormatVersion: '1.0'
+  /analytics/recomendaciones:
+    get:
+      summary: Productos recomendados (?productoId=&limite=)
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: GET
+        uri: http://REEMPLAZAR_IP_ANALYTICS:8089/api/analytics/recomendaciones
+        connectionType: INTERNET
+        payloadFormatVersion: '1.0'
+  /analytics/perfil:
+    get:
+      summary: Perfil de navegacion del usuario
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: GET
+        uri: http://REEMPLAZAR_IP_ANALYTICS:8089/api/analytics/perfil
+        connectionType: INTERNET
+        payloadFormatVersion: '1.0'
+  /analytics/metricas:
+    get:
+      summary: Foto de las metricas (solo ADMIN)
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: GET
+        uri: http://REEMPLAZAR_IP_ANALYTICS:8089/api/analytics/metricas
+        connectionType: INTERNET
+        payloadFormatVersion: '1.0'
+  /cupones:
+    get:
+      summary: Listar cupones (solo ADMIN)
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: GET
+        uri: http://REEMPLAZAR_IP_CUPONES:8092/api/cupones
+        connectionType: INTERNET
+        payloadFormatVersion: '1.0'
+    post:
+      summary: Crear un cupon (solo ADMIN)
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: POST
+        uri: http://REEMPLAZAR_IP_CUPONES:8092/api/cupones
+        connectionType: INTERNET
+        payloadFormatVersion: '1.0'
+  /cupones/validar:
+    post:
+      summary: Calcular el descuento de un cupon sin consumirlo
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: POST
+        uri: http://REEMPLAZAR_IP_CUPONES:8092/api/cupones/validar
+        connectionType: INTERNET
+        payloadFormatVersion: '1.0'
+  /cupones/{id}/activo:
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+    put:
+      summary: Activar o desactivar un cupon (solo ADMIN)
+      x-amazon-apigateway-integration:
+        type: http_proxy
+        httpMethod: PUT
+        uri: http://REEMPLAZAR_IP_CUPONES:8092/api/cupones/{id}/activo
         connectionType: INTERNET
         payloadFormatVersion: '1.0'

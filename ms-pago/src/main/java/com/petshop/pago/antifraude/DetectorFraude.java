@@ -11,12 +11,9 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Regla antifraude: si una misma tarjeta se repite MAS de {@code maxIntentos} veces dentro de una ventana
- * deslizante de {@code ventanaSegundos} (por defecto, mas de 3 veces en 10 segundos) el intento se bloquea.
- *
- * Se cuentan todos los intentos de la tarjeta (aprobados, rechazados o bloqueados), de modo que quien sigue
- * insistiendo permanece bloqueado hasta que pasa la ventana. La tarjeta se identifica por su hash, nunca por
- * el numero. El estado vive en memoria de esta instancia (una instancia de ms-pago).
+ * Contador de la regla antifraude: dice si una clave (el usuario) tiene MAS de {@code maxIntentos} intentos
+ * dentro de una ventana deslizante de {@code ventanaSegundos} (por defecto, mas de 3 en 60 segundos).
+ * El bloqueo de 15 minutos lo decide {@link Antifraude}. El estado vive en memoria de esta instancia.
  */
 @Component
 public class DetectorFraude {
@@ -31,7 +28,7 @@ public class DetectorFraude {
 
     @Autowired
     public DetectorFraude(@Value("${app.antifraude.max-intentos:3}") int maxIntentos,
-                          @Value("${app.antifraude.ventana-segundos:10}") int ventanaSegundos) {
+                          @Value("${app.antifraude.ventana-segundos:60}") int ventanaSegundos) {
         this(maxIntentos, ventanaSegundos, Clock.systemUTC());
     }
 

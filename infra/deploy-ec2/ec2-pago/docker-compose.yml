@@ -6,6 +6,9 @@
 # - Guarda los pagos en la MySQL de la EC2 de productos (esquema pago_db; el script mysql-init lo crea).
 # - Consulta la orden en ms-orden (reenvia el JWT del usuario: el monto sale de la orden).
 # - Publica el resultado de cada pago en el topico Kafka eventos.pagos (3 brokers).
+# - Antifraude: publica cada intento en pagos.intentos y lo cuenta (grupo antifraude). Mas de 3 compras
+#   del mismo usuario en 1 minuto = bloqueo de 15 minutos, guardado en DynamoDB (tabla pedidos360-bloqueos,
+#   se crea sola). La EC2 debe tener el perfil de instancia LabInstanceProfile (rol LabRole).
 # - CARD_HASH_PEPPER: texto secreto que se mezcla con el numero de tarjeta antes del hash. Definirlo en un .env
 #   (no se sube al repo) y no cambiarlo despues, o la regla antifraude pierde la memoria de las tarjetas.
 # Security Group de esta EC2: abrir 8088.
@@ -23,7 +26,11 @@ services:
       ORDENES_URL: ${ORDENES_URL}
       KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_EC2_HOST}:9092,${KAFKA_EC2_HOST}:9093,${KAFKA_EC2_HOST}:9094
       ANTIFRAUDE_MAX_INTENTOS: ${ANTIFRAUDE_MAX_INTENTOS:-3}
-      ANTIFRAUDE_VENTANA_SEGUNDOS: ${ANTIFRAUDE_VENTANA_SEGUNDOS:-10}
+      ANTIFRAUDE_VENTANA_SEGUNDOS: ${ANTIFRAUDE_VENTANA_SEGUNDOS:-60}
+      ANTIFRAUDE_DURACION_BLOQUEO_MINUTOS: ${ANTIFRAUDE_DURACION_BLOQUEO_MINUTOS:-15}
+      ANTIFRAUDE_STORE: ${ANTIFRAUDE_STORE:-dynamodb}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      DYNAMODB_TABLA_BLOQUEOS: ${DYNAMODB_TABLA_BLOQUEOS:-pedidos360-bloqueos}
       CARD_HASH_PEPPER: ${CARD_HASH_PEPPER:-pedidos360-pepper-solo-para-desarrollo}
       # Webpay (ambiente de integracion). Pagina del frontend a la que Transbank devuelve al usuario.
       WEBPAY_RETURN_URL: ${WEBPAY_RETURN_URL:-http://localhost:3000/pago/retorno}

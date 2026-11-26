@@ -1,0 +1,15 @@
+# Prometheus en AWS. Las direcciones de los microservicios estan en targets/*.json, que se
+# generan con ./generar-targets.sh a partir de las IP privadas de cada EC2. Prometheus relee
+# esos archivos solo: si cambia una IP, se vuelve a ejecutar el script y no hay que reiniciar.
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: pedidos360
+    metrics_path: /actuator/prometheus
+    file_sd_configs:
+      - files: ["/etc/prometheus/targets/servicios.json"]
+
+  - job_name: rabbitmq
+    file_sd_configs:
+      - files: ["/etc/prometheus/targets/rabbitmq.json"]

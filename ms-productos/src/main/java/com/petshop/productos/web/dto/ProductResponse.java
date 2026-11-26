@@ -12,7 +12,9 @@ public record ProductResponse(
         int stock,
         String categoria,
         String imagenUrl,
-        Long idVendedor
+        Long idVendedor,
+        int resenasCantidad,
+        BigDecimal calificacionPromedio
 ) {
 
     public static ProductResponse from(Product p) {
@@ -24,7 +26,9 @@ public record ProductResponse(
                 p.getStock(),
                 p.getCategoria(),
                 p.getImagenUrl(),
-                p.getIdVendedor()
+                p.getIdVendedor(),
+                p.getResenasCantidad(),
+                p.getCalificacionPromedio()
         );
     }
 }
