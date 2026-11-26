@@ -16,7 +16,7 @@ info:
 x-amazon-apigateway-cors:
   allowOrigins:
   - http://localhost:3000
-  - http://100.50.134.6
+  - https://il7nn2ok2e.execute-api.us-east-1.amazonaws.com
   allowMethods:
   - GET
   - POST
