@@ -43,5 +43,6 @@ public class Orden {
     public String getUsuarioId() { return usuarioId; }
     public BigDecimal getTotal() { return total; }
     public String getEstado() { return estado; }
+    public void setEstado(String estado) { this.estado = estado; }
     public LocalDateTime getCreadoEn() { return creadoEn; }
 }

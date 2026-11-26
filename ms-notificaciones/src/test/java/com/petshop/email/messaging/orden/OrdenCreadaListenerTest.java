@@ -42,9 +42,9 @@ class OrdenCreadaListenerTest {
         channel = mock(Channel.class);
         MessagingProperties props = new MessagingProperties(
                 new MessagingProperties.Exchanges("pedidos.exchange", "pedidos.eventos", "pedidos.dlx"),
-                new MessagingProperties.Queues("orden.creada", "stock.descontar", "stock.bajo", "resena.creada"),
-                new MessagingProperties.Dlqs("orden.creada.dlq", "stock.descontar.dlq", "stock.bajo.dlq", "resena.creada.dlq"),
-                new MessagingProperties.RoutingKeys("orden.creada", "stock.descontar", "stock.bajo", "resena.creada"),
+                new MessagingProperties.Queues("orden.creada", "stock.descontar", "stock.bajo", "resena.creada", "pago.procesado", "cupon.usado"),
+                new MessagingProperties.Dlqs("orden.creada.dlq", "stock.descontar.dlq", "stock.bajo.dlq", "resena.creada.dlq", "pago.procesado.dlq", "cupon.usado.dlq"),
+                new MessagingProperties.RoutingKeys("orden.creada", "stock.descontar", "stock.bajo", "resena.creada", "pago.procesado", "cupon.usado"),
                 new MessagingProperties.Retry(3, 1));
         EventParser parser = new EventParser(JsonMapper.builder().build(),
                 Validation.buildDefaultValidatorFactory().getValidator());

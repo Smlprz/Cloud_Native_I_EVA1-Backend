@@ -4,6 +4,8 @@ import com.petshop.pago.domain.EstadoPago;
 import com.petshop.pago.domain.Pago;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.petshop.pago.messaging.rabbit.PagoProcesadoPublisher;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
@@ -22,14 +24,19 @@ public class PagoEventPublisher {
 
     private final KafkaTemplate<String, PagoEvent> kafka;
     private final String topico;
+    private final ObjectProvider<PagoProcesadoPublisher> rabbit;
 
     public PagoEventPublisher(KafkaTemplate<String, PagoEvent> kafka,
-                              @Value("${kafka.topics.pagos}") String topico) {
+                              @Value("${kafka.topics.pagos}") String topico,
+                              ObjectProvider<PagoProcesadoPublisher> rabbit) {
         this.kafka = kafka;
         this.topico = topico;
+        this.rabbit = rabbit;
     }
 
+    /** Publica el resultado en Kafka (eventos.pagos, analitica) y en RabbitMQ (pago.procesado, para ms-orden). */
     public void publicar(Pago pago) {
+        rabbit.ifAvailable(r -> r.publicar(pago));
         PagoEvent evento = new PagoEvent(
                 UUID.randomUUID().toString(),
                 tipoDe(pago.getEstado()),

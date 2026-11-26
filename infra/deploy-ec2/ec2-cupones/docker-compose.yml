@@ -15,6 +15,9 @@ services:
     container_name: pedidos360-ms-cupones
     restart: unless-stopped
     environment:
+      SPRING_RABBITMQ_ADDRESSES: ${RABBITMQ_EC2_HOST:-localhost}:5672,${RABBITMQ_EC2_HOST:-localhost}:5673
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_USER:-guest}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-guest}
       JAVA_TOOL_OPTIONS: ${JAVA_TOOL_OPTIONS:--Xmx256m}
       SPRING_DATASOURCE_URL: jdbc:mysql://${PRODUCTOS_EC2_HOST}:3307/cupones_db
       SPRING_DATASOURCE_USERNAME: pedidos
@@ -22,7 +25,7 @@ services:
       KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_EC2_HOST}:9092,${KAFKA_EC2_HOST}:9093,${KAFKA_EC2_HOST}:9094
       AZURE_JWK_SET_URI: https://login.microsoftonline.com/e5372bf0-c5e3-4286-887c-79069f209c1f/discovery/v2.0/keys
       AZURE_ISSUER: https://login.microsoftonline.com/e5372bf0-c5e3-4286-887c-79069f209c1f/v2.0
-      AZURE_AUDIENCE: ${AZURE_AUDIENCE:-api://054a13aa-d3c3-4155-9b83-d3b1c964d7ae}
+      AZURE_AUDIENCE: ${AZURE_AUDIENCE:-api://ce3e5b61-0b01-4a67-a42b-f15ccb364024}
       SECURITY_CORS_ALLOWED_ORIGINS: ${FRONTEND_ORIGIN:-http://localhost:3000,http://localhost:3001,https://100-63-104-24.nip.io}
       APP_ROLES_ADMIN: ${APP_ROLES_ADMIN:-}
       APP_ROLES_VENDEDOR: ${APP_ROLES_VENDEDOR:-}

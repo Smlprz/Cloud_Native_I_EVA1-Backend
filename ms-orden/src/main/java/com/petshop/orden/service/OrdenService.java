@@ -44,4 +44,24 @@ public class OrdenService {
         }
         return OrdenResponse.from(orden);
     }
+
+    /**
+     * Resultado de un pago (cola pago.procesado). APROBADO -> PAGADA; cualquier otro -> PAGO_RECHAZADO,
+     * salvo que la orden ya este PAGADA (un intento fallido posterior no la deshace).
+     * @return false si la orden no existe.
+     */
+    @org.springframework.transaction.annotation.Transactional
+    public boolean registrarPago(Long ordenId, String estadoPago) {
+        return repository.findById(ordenId).map(orden -> {
+            if ("APROBADO".equals(estadoPago)) {
+                orden.setEstado("PAGADA");
+            } else if (!"PAGADA".equals(orden.getEstado())) {
+                orden.setEstado("PAGO_RECHAZADO");
+            }
+            repository.save(orden);
+            org.slf4j.LoggerFactory.getLogger(OrdenService.class)
+                    .info("Orden {}: pago {} -> estado {}", ordenId, estadoPago, orden.getEstado());
+            return true;
+        }).orElse(false);
+    }
 }

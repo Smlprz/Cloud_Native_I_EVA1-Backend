@@ -1,6 +1,7 @@
 package com.petshop.cupones.service;
 
 import com.petshop.cupones.domain.Cupon;
+import com.petshop.cupones.messaging.rabbit.CuponUsadoPublisher;
 import com.petshop.cupones.domain.CuponUso;
 import com.petshop.cupones.domain.TipoCupon;
 import com.petshop.cupones.repository.CuponRepository;
@@ -108,6 +109,9 @@ public class CuponService {
         }
         log.info("Cupon {} aplicado por {}: {} de descuento sobre {}", cupon.getCodigo(), usuarioId,
                 resultado.descuento(), monto);
+        if (cuponUsado != null) {
+            cuponUsado.publicar(cupon.getCodigo(), usuarioId, resultado.descuento());
+        }
         return resultado;
     }
 
@@ -136,5 +140,13 @@ public class CuponService {
 
     private static String normalizar(String codigo) {
         return codigo == null ? "" : codigo.trim().toUpperCase(Locale.ROOT);
+    }
+
+    private CuponUsadoPublisher cuponUsado;
+
+    /** Cola cupon.usado (RabbitMQ). Opcional: las pruebas unitarias crean el servicio sin RabbitMQ. */
+    @Autowired(required = false)
+    void setCuponUsado(CuponUsadoPublisher cuponUsado) {
+        this.cuponUsado = cuponUsado;
     }
 }

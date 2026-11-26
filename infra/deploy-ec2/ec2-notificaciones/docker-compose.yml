@@ -18,7 +18,7 @@ services:
       SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-guest}
       AZURE_JWK_SET_URI: https://login.microsoftonline.com/e5372bf0-c5e3-4286-887c-79069f209c1f/discovery/v2.0/keys
       AZURE_ISSUER: https://login.microsoftonline.com/e5372bf0-c5e3-4286-887c-79069f209c1f/v2.0
-      AZURE_AUDIENCE: ${AZURE_AUDIENCE:-api://054a13aa-d3c3-4155-9b83-d3b1c964d7ae}
+      AZURE_AUDIENCE: ${AZURE_AUDIENCE:-api://ce3e5b61-0b01-4a67-a42b-f15ccb364024}
       APP_ROLES_ADMIN: ${APP_ROLES_ADMIN:-}
       # MAIL_SIMULADO=true: el correo solo se escribe en el log (demo sin Gmail)
       MAIL_SIMULADO: ${MAIL_SIMULADO:-false}

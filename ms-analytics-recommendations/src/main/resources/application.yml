@@ -2,6 +2,20 @@ server:
   port: 8080
 
 spring:
+  rabbitmq:
+    addresses: ${SPRING_RABBITMQ_ADDRESSES:${SPRING_RABBITMQ_HOST:localhost}:${SPRING_RABBITMQ_PORT:5672}}
+    username: ${SPRING_RABBITMQ_USERNAME:guest}
+    password: ${SPRING_RABBITMQ_PASSWORD:guest}
+    connection-timeout: 5s
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    listener:
+      simple:
+        # ACK explicito: lo gestiona AckSupport (ack / reintento / nack hacia la DLQ).
+        acknowledge-mode: manual
+        prefetch: 10
+        default-requeue-rejected: false
+
   application:
     name: ms-analytics-recommendations
 
@@ -88,3 +102,34 @@ management:
     health:
       probes:
         enabled: true
+
+# RabbitMQ: consume cupon.usado (lo publica ms-cupones al aplicar un cupon)
+messaging:
+  exchanges:
+    direct: pedidos.exchange
+    topic: pedidos.eventos
+    dlx: pedidos.dlx
+  queues:
+    orden-creada: orden.creada
+    stock-descontar: stock.descontar
+    stock-bajo: stock.bajo
+    resena-creada: resena.creada
+    pago-procesado: pago.procesado
+    cupon-usado: cupon.usado
+  dlqs:
+    orden-creada: orden.creada.dlq
+    stock-descontar: stock.descontar.dlq
+    stock-bajo: stock.bajo.dlq
+    resena-creada: resena.creada.dlq
+    pago-procesado: pago.procesado.dlq
+    cupon-usado: cupon.usado.dlq
+  routing-keys:
+    orden-creada: orden.creada
+    stock-descontar: stock.descontar
+    stock-bajo: stock.bajo
+    resena-creada: resena.creada
+    pago-procesado: pago.procesado
+    cupon-usado: cupon.usado
+  retry:
+    max-attempts: ${MESSAGING_RETRY_MAX_ATTEMPTS:3}
+    backoff-ms: ${MESSAGING_RETRY_BACKOFF_MS:2000}

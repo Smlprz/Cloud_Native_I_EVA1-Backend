@@ -39,8 +39,8 @@ components:
           issuer: "https://login.microsoftonline.com/e5372bf0-c5e3-4286-887c-79069f209c1f/v2.0"
           # audience = App ID URI o Client ID de la API (Azure v2 puede emitir cualquiera)
           audience:
-            - "api://054a13aa-d3c3-4155-9b83-d3b1c964d7ae"
-            - "054a13aa-d3c3-4155-9b83-d3b1c964d7ae"
+            - "api://ce3e5b61-0b01-4a67-a42b-f15ccb364024"
+            - "ce3e5b61-0b01-4a67-a42b-f15ccb364024"
 
 # Por defecto toda ruta exige un JWT valido; el catalogo (GET) se marca publico.
 security:
@@ -112,7 +112,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: GET
-        uri: "http://32.197.51.142:8082/api/carrito"
+        uri: "http://3.208.89.181:8082/api/carrito"
         connectionType: INTERNET
         payloadFormatVersion: "1.0"
     delete:
@@ -120,7 +120,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: DELETE
-        uri: "http://32.197.51.142:8082/api/carrito"
+        uri: "http://3.208.89.181:8082/api/carrito"
         connectionType: INTERNET
         payloadFormatVersion: "1.0"
 
@@ -130,7 +130,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: POST
-        uri: "http://32.197.51.142:8082/api/carrito/items"
+        uri: "http://3.208.89.181:8082/api/carrito/items"
         connectionType: INTERNET
         payloadFormatVersion: "1.0"
 
@@ -146,7 +146,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: PUT
-        uri: "http://32.197.51.142:8082/api/carrito/items/{itemId}"
+        uri: "http://3.208.89.181:8082/api/carrito/items/{itemId}"
         connectionType: INTERNET
         payloadFormatVersion: "1.0"
     delete:
@@ -154,7 +154,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: DELETE
-        uri: "http://32.197.51.142:8082/api/carrito/items/{itemId}"
+        uri: "http://3.208.89.181:8082/api/carrito/items/{itemId}"
         connectionType: INTERNET
         payloadFormatVersion: "1.0"
 
@@ -164,7 +164,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: POST
-        uri: "http://32.197.51.142:8082/api/carrito/checkout"
+        uri: "http://3.208.89.181:8082/api/carrito/checkout"
         connectionType: INTERNET
         payloadFormatVersion: "1.0"
 
@@ -174,7 +174,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: GET
-        uri: "http://32.197.51.142:8082/api/carrito/pedidos"
+        uri: "http://3.208.89.181:8082/api/carrito/pedidos"
         connectionType: INTERNET
         payloadFormatVersion: "1.0"
 
@@ -187,7 +187,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: GET
-        uri: "http://3.221.149.7:8085/api/ordenes"
+        uri: "http://13.220.183.124:8085/api/ordenes"
         connectionType: INTERNET
         payloadFormatVersion: "1.0"
     post:
@@ -195,7 +195,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: POST
-        uri: "http://3.221.149.7:8085/api/ordenes"
+        uri: "http://13.220.183.124:8085/api/ordenes"
         connectionType: INTERNET
         payloadFormatVersion: "1.0"
 
@@ -327,7 +327,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: GET
-        uri: "http://3.236.91.40:8083/api/auth/health"
+        uri: "http://34.201.47.100:8083/api/auth/health"
         connectionType: INTERNET
         payloadFormatVersion: "1.0"
 
@@ -337,7 +337,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: GET
-        uri: "http://3.236.91.40:8083/api/auth/me"
+        uri: "http://34.201.47.100:8083/api/auth/me"
         connectionType: INTERNET
         payloadFormatVersion: "1.0"
 
@@ -347,7 +347,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: GET
-        uri: "http://3.236.91.40:8083/api/auth/accesos"
+        uri: "http://34.201.47.100:8083/api/auth/accesos"
         connectionType: INTERNET
         payloadFormatVersion: "1.0"
 
@@ -361,7 +361,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: GET
-        uri: "http://18.205.3.139:8088/api/pagos"
+        uri: "http://3.218.150.42:8088/api/pagos"
         connectionType: INTERNET
         payloadFormatVersion: "1.0"
     post:
@@ -369,7 +369,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: POST
-        uri: "http://18.205.3.139:8088/api/pagos"
+        uri: "http://3.218.150.42:8088/api/pagos"
         connectionType: INTERNET
         payloadFormatVersion: "1.0"
 
@@ -379,7 +379,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: GET
-        uri: http://18.205.3.139:8088/api/pagos/bloqueo
+        uri: http://3.218.150.42:8088/api/pagos/bloqueo
         connectionType: INTERNET
         payloadFormatVersion: '1.0'
   /pagos/alertas-fraude:
@@ -388,7 +388,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: GET
-        uri: http://18.205.3.139:8088/api/pagos/alertas-fraude
+        uri: http://3.218.150.42:8088/api/pagos/alertas-fraude
         connectionType: INTERNET
         payloadFormatVersion: '1.0'
   /pagos/webpay/iniciar:
@@ -397,7 +397,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: POST
-        uri: http://18.205.3.139:8088/api/pagos/webpay/iniciar
+        uri: http://3.218.150.42:8088/api/pagos/webpay/iniciar
         connectionType: INTERNET
         payloadFormatVersion: '1.0'
   /pagos/webpay/confirmar:
@@ -406,7 +406,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: POST
-        uri: http://18.205.3.139:8088/api/pagos/webpay/confirmar
+        uri: http://3.218.150.42:8088/api/pagos/webpay/confirmar
         connectionType: INTERNET
         payloadFormatVersion: '1.0'
   /pagos/webpay/anular:
@@ -415,7 +415,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: POST
-        uri: http://18.205.3.139:8088/api/pagos/webpay/anular
+        uri: http://3.218.150.42:8088/api/pagos/webpay/anular
         connectionType: INTERNET
         payloadFormatVersion: '1.0'
   /pagos/bloqueos/{usuarioId}:
@@ -430,7 +430,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: DELETE
-        uri: http://18.205.3.139:8088/api/pagos/bloqueos/{usuarioId}
+        uri: http://3.218.150.42:8088/api/pagos/bloqueos/{usuarioId}
         connectionType: INTERNET
         payloadFormatVersion: '1.0'
 
@@ -600,7 +600,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: GET
-        uri: "http://32.197.51.142:8092/api/cupones"
+        uri: "http://3.208.89.181:8092/api/cupones"
         connectionType: INTERNET
         payloadFormatVersion: "1.0"
     post:
@@ -608,7 +608,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: POST
-        uri: "http://32.197.51.142:8092/api/cupones"
+        uri: "http://3.208.89.181:8092/api/cupones"
         connectionType: INTERNET
         payloadFormatVersion: "1.0"
 
@@ -618,7 +618,7 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: POST
-        uri: "http://32.197.51.142:8092/api/cupones/validar"
+        uri: "http://3.208.89.181:8092/api/cupones/validar"
         connectionType: INTERNET
         payloadFormatVersion: "1.0"
 
@@ -634,6 +634,6 @@ paths:
       x-amazon-apigateway-integration:
         type: http_proxy
         httpMethod: PUT
-        uri: "http://32.197.51.142:8092/api/cupones/{id}/activo"
+        uri: "http://3.208.89.181:8092/api/cupones/{id}/activo"
         connectionType: INTERNET
         payloadFormatVersion: "1.0"
