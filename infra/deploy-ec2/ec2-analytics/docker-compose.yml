@@ -23,6 +23,8 @@ services:
       JAVA_TOOL_OPTIONS: ${JAVA_TOOL_OPTIONS:--Xmx320m}
       KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_EC2_HOST}:9092,${KAFKA_EC2_HOST}:9093,${KAFKA_EC2_HOST}:9094
       ANALYTICS_STORE: ${ANALYTICS_STORE:-dynamodb}
+      # API Gateway WebSocket del dashboard (https://<id>.execute-api.us-east-1.amazonaws.com/prod)
+      WS_GATEWAY_ENDPOINT: ${WS_GATEWAY_ENDPOINT:-}
       AWS_REGION: ${AWS_REGION:-us-east-1}
       PRODUCTOS_URL: ${PRODUCTOS_URL}
       AZURE_JWK_SET_URI: https://login.microsoftonline.com/e5372bf0-c5e3-4286-887c-79069f209c1f/discovery/v2.0/keys

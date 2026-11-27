@@ -33,4 +33,5 @@ public record NavegacionEvent(
     public static final String ITEM_AGREGADO = "ITEM_AGREGADO";
     public static final String ITEM_ELIMINADO = "ITEM_ELIMINADO";
     public static final String COMPRA_REALIZADA = "COMPRA_REALIZADA";
+    public static final String ENVIO_GESTIONADO = "ENVIO_GESTIONADO";
 }

@@ -86,7 +86,8 @@ public class MetricasWebSocketHandler extends TextWebSocketHandler {
         }
     }
 
-    private String json() {
+    /** La foto actual de las metricas en JSON (la misma que reciben los dashboards). */
+    public String json() {
         try {
             return mapper.writeValueAsString(metricas.snapshot());
         } catch (IOException e) {

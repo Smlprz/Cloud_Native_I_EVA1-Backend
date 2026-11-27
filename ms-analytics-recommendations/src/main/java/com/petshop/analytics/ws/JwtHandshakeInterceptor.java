@@ -45,23 +45,28 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
     @Override
     public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response,
                                    WebSocketHandler handler, Map<String, Object> attributes) {
-        String token = tokenDe(request);
+        Rechazo rechazo = validar(tokenDe(request));
+        return rechazo == null || rechazar(response, rechazo.status(), rechazo.motivo());
+    }
+
+    /** null si el token es valido y de un ADMIN; si no, el codigo y el motivo del rechazo. */
+    public Rechazo validar(String token) {
         if (token == null || token.isBlank()) {
-            return rechazar(response, HttpStatus.UNAUTHORIZED, "falta el token");
+            return new Rechazo(HttpStatus.UNAUTHORIZED, "falta el token");
         }
         Jwt jwt;
         try {
             jwt = jwtDecoder.decode(token);
         } catch (JwtException e) {
-            return rechazar(response, HttpStatus.UNAUTHORIZED, "token invalido: " + e.getMessage());
+            return new Rechazo(HttpStatus.UNAUTHORIZED, "token invalido: " + e.getMessage());
         }
         boolean esAdmin = new AzureJwtConverter(admins, vendedores).convert(jwt).getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .anyMatch("ROLE_ADMIN"::equals);
-        if (!esAdmin) {
-            return rechazar(response, HttpStatus.FORBIDDEN, "se requiere rol ADMIN");
-        }
-        return true;
+        return esAdmin ? null : new Rechazo(HttpStatus.FORBIDDEN, "se requiere rol ADMIN");
+    }
+
+    public record Rechazo(HttpStatus status, String motivo) {
     }
 
     @Override

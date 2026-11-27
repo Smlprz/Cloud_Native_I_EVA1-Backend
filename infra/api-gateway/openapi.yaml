@@ -373,15 +373,6 @@ paths:
         connectionType: INTERNET
         payloadFormatVersion: "1.0"
 
-  /pagos/bloqueo:
-    get:
-      summary: Bloqueo antifraude del usuario (bloqueado, hasta)
-      x-amazon-apigateway-integration:
-        type: http_proxy
-        httpMethod: GET
-        uri: http://3.218.150.42:8088/api/pagos/bloqueo
-        connectionType: INTERNET
-        payloadFormatVersion: '1.0'
   /pagos/alertas-fraude:
     get:
       summary: Alertas de fraude (solo ADMIN)
@@ -416,21 +407,6 @@ paths:
         type: http_proxy
         httpMethod: POST
         uri: http://3.218.150.42:8088/api/pagos/webpay/anular
-        connectionType: INTERNET
-        payloadFormatVersion: '1.0'
-  /pagos/bloqueos/{usuarioId}:
-    parameters:
-    - name: usuarioId
-      in: path
-      required: true
-      schema:
-        type: string
-    delete:
-      summary: Desbloquear a un usuario (solo ADMIN)
-      x-amazon-apigateway-integration:
-        type: http_proxy
-        httpMethod: DELETE
-        uri: http://3.218.150.42:8088/api/pagos/bloqueos/{usuarioId}
         connectionType: INTERNET
         payloadFormatVersion: '1.0'
 

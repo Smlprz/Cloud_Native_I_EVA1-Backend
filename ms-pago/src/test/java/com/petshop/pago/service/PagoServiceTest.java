@@ -33,13 +33,13 @@ import static org.mockito.Mockito.when;
 
 /**
  * Flujo completo del pago con la base de datos (H2). ms-orden y Kafka se reemplazan por dobles.
- * Cada prueba usa un usuario distinto: el antifraude es un singleton y recuerda los intentos de cada usuario.
+ * Cada prueba usa una tarjeta distinta: el detector antifraude es un singleton y recuerda los intentos.
  */
 @SpringBootTest
 @ActiveProfiles("test")
 class PagoServiceTest {
 
-    private final String USUARIO = "usuario-" + java.util.UUID.randomUUID();
+    private static final String USUARIO = "usuario-1";
     private static final String TOKEN = "token";
 
     @Autowired private PagoService service;
@@ -114,7 +114,7 @@ class PagoServiceTest {
     }
 
     @Test
-    void bloqueaAlUsuarioALaCuartaCompraEnUnMinutoYRegistraLaAlerta() {
+    void bloqueaLaMismaTarjetaALaCuartaVezEnDiezSegundosYRegistraLaAlerta() {
         Long orden = ordenExistente("1000.00");
         String tarjeta = "4000000000000002"; // siempre rechazada: la orden sigue sin pagar
 
@@ -124,17 +124,13 @@ class PagoServiceTest {
         PagoResponse cuarto = service.procesar(USUARIO, TOKEN, pago(orden, tarjeta));
 
         assertEquals(EstadoPago.BLOQUEADO_FRAUDE, cuarto.estado());
-        assertTrue(cuarto.motivo().contains("bloqueado"));
+        assertTrue(cuarto.motivo().contains("bloqueada"));
         var alertasGuardadas = alertas.findAll();
         assertEquals(1, alertasGuardadas.size());
         assertEquals("0002", alertasGuardadas.get(0).getTarjetaUltimos4());
         assertEquals(4, alertasGuardadas.get(0).getIntentos());
-        assertEquals(60, alertasGuardadas.get(0).getVentanaSegundos());
+        assertEquals(10, alertasGuardadas.get(0).getVentanaSegundos());
         verify(publicador, times(4)).publicar(any()); // 3 rechazos + 1 fraude, todos hacia Kafka
-
-        // Sigue bloqueado aunque use otra tarjeta: el bloqueo es del usuario (15 minutos).
-        PagoResponse otraTarjeta = service.procesar(USUARIO, TOKEN, pago(ordenExistente("1000.00"), "5555555555554444"));
-        assertEquals(EstadoPago.BLOQUEADO_FRAUDE, otraTarjeta.estado());
     }
 
     @Test

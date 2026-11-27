@@ -1,6 +1,6 @@
 package com.petshop.pago.service;
 
-import com.petshop.pago.antifraude.Antifraude;
+import com.petshop.pago.antifraude.DetectorFraude;
 import com.petshop.pago.client.OrdenDto;
 import com.petshop.pago.client.OrdenesClient;
 import com.petshop.pago.domain.AlertaFraude;
@@ -44,13 +44,13 @@ public class WebpayService {
     private final PagoRepository pagos;
     private final AlertaFraudeRepository alertas;
     private final OrdenesClient ordenes;
-    private final Antifraude antifraude;
+    private final DetectorFraude detector;
     private final PagoEventPublisher publicador;
     private final String pepper;
     private final String returnUrl;
 
     public WebpayService(WebpayClient webpay, WebpayTransaccionRepository transacciones, PagoRepository pagos,
-                         AlertaFraudeRepository alertas, OrdenesClient ordenes, Antifraude antifraude,
+                         AlertaFraudeRepository alertas, OrdenesClient ordenes, DetectorFraude detector,
                          PagoEventPublisher publicador,
                          @Value("${app.antifraude.pepper}") String pepper,
                          @Value("${app.webpay.return-url}") String returnUrl) {
@@ -59,7 +59,7 @@ public class WebpayService {
         this.pagos = pagos;
         this.alertas = alertas;
         this.ordenes = ordenes;
-        this.antifraude = antifraude;
+        this.detector = detector;
         this.publicador = publicador;
         this.pepper = pepper;
         this.returnUrl = returnUrl;
@@ -70,17 +70,19 @@ public class WebpayService {
                 .orElseThrow(() -> PagoException.ordenNoEncontrada(ordenId));
         String huellaUsuario = TarjetaUtil.hash("usuario:" + usuarioId, pepper);
 
-        Antifraude.Resultado intento = antifraude.evaluar(usuarioId, orden.id());
+        DetectorFraude.Resultado intento = detector.registrarIntento("usuario:" + usuarioId);
         if (intento.bloqueado()) {
-            String motivo = antifraude.motivo(intento.hasta());
+            String motivo = "El mismo usuario intento pagar " + intento.intentosEnVentana() + " veces en "
+                    + detector.getVentanaSegundos() + " segundos: transaccion bloqueada por seguridad";
             alertas.save(new AlertaFraude(usuarioId, orden.id(), SIN_TARJETA, huellaUsuario,
-                    antifraude.getMaxIntentos() + 1, antifraude.getVentanaSegundos()));
+                    intento.intentosEnVentana(), detector.getVentanaSegundos()));
             Pago bloqueado = pagos.save(new Pago(orden.id(), usuarioId, orden.total(), SIN_TARJETA, huellaUsuario,
                     EstadoPago.BLOQUEADO_FRAUDE, motivo));
+            Metrics.counter("pedidos360.antifraude.bloqueos").increment();
             Metrics.counter("pedidos360.pagos", "estado", EstadoPago.BLOQUEADO_FRAUDE.name()).increment();
             publicador.publicar(bloqueado);
-            log.warn("Pago Webpay bloqueado por antifraude: usuario {} (bloqueado hasta {}), orden {}",
-                    usuarioId, intento.hasta(), orden.id());
+            log.warn("ALERTA DE FRAUDE (Webpay): usuario {} con {} intentos en {} s, orden {}. Transaccion bloqueada.",
+                    usuarioId, intento.intentosEnVentana(), detector.getVentanaSegundos(), orden.id());
             throw PagoException.bloqueadoPorFraude(motivo);
         }
         if (pagos.existsByOrdenIdAndEstado(orden.id(), EstadoPago.APROBADO)) {

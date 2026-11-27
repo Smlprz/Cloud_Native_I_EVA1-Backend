@@ -15,23 +15,26 @@ public class MetricasBroadcaster {
 
     private final MetricasService metricas;
     private final MetricasWebSocketHandler handler;
+    private final ApiGatewayWsDifusor gateway;
     private long ultimaVersion = -1;
     private int ticksSinEnviar = 0;
 
-    public MetricasBroadcaster(MetricasService metricas, MetricasWebSocketHandler handler) {
+    public MetricasBroadcaster(MetricasService metricas, MetricasWebSocketHandler handler, ApiGatewayWsDifusor gateway) {
         this.metricas = metricas;
         this.handler = handler;
+        this.gateway = gateway;
     }
 
     @Scheduled(fixedDelay = 1000)
     void tick() {
-        if (handler.conectados() == 0) {
+        if (handler.conectados() == 0 && gateway.conectados() == 0) {
             return;
         }
         long version = metricas.version();
         ticksSinEnviar++;
-        if (version != ultimaVersion || ticksSinEnviar >= TICKS_ENTRE_REFRESCOS) {
+        if (version != ultimaVersion || ticksSinEnviar >= TICKS_ENTRE_REFRESCOS || gateway.tomarNuevas()) {
             handler.difundir();
+            gateway.difundir(handler.json());
             ultimaVersion = version;
             ticksSinEnviar = 0;
         }

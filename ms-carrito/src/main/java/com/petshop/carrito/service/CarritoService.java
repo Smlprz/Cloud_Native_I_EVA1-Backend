@@ -132,6 +132,8 @@ public class CarritoService {
         PedidoResponse respuesta = PedidoResponse.from(pedidoRepository.save(pedido));
         carrito.getItems().forEach(item -> navegacion.compraRealizada(usuarioId, item.getProductoId(),
                 item.getNombreProducto(), item.getPrecioUnitario(), item.getCantidad()));
+        navegacion.envioGestionado(usuarioId, respuesta.id(), respuesta.total(),
+                carrito.getItems().stream().mapToInt(i -> i.getCantidad()).sum());
         return respuesta;
     }
 

@@ -62,6 +62,8 @@ class CarritoNavegacionTest {
 
         verify(navegacion).compraRealizada(eq("user-nav-3"), eq(30L), eq("Alimento Perro"),
                 eq(new BigDecimal("10000.00")), eq(2));
+        // Y gestiona el envio del pedido (ENVIO_GESTIONADO): total 20.000, 2 unidades.
+        verify(navegacion).envioGestionado(eq("user-nav-3"), any(), eq(new BigDecimal("20000.00")), eq(2));
     }
 
     @Test

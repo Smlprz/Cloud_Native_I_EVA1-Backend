@@ -16,7 +16,7 @@ analítica en tiempo real con **Apache Kafka** (3 Zookeeper + 3 brokers).
 | [`ms-orden`](ms-orden/) | 8085 | `orden_db` | Órdenes. **Publica `orden.creada` y `stock.descontar`**. |
 | [`ms-resenas`](ms-resenas/) | 8086 | `resenas_db` | Reseñas de productos. **Publica `resena.creada`**. |
 | [`ms-rabbit-admin`](ms-rabbit-admin/) | 8087 | — | Administra RabbitMQ por REST: crea/elimina colas, exchanges y bindings. |
-| [`ms-pago`](ms-pago/) | 8088 | `pago_db` | Pago simulado de una orden con **antifraude por Kafka**: más de 3 compras del mismo usuario en 1 minuto lo bloquean 15 minutos (bloqueo en **DynamoDB**). **Publica en Kafka `eventos.pagos` y `pagos.intentos`**. |
+| [`ms-pago`](ms-pago/) | 8088 | `pago_db` | Pago simulado (o Webpay) de una orden con **antifraude**: la misma tarjeta más de 3 veces en 10 s se bloquea y se registra la alerta. **Publica en Kafka `eventos.pagos`** y en RabbitMQ `pago.procesado`. |
 | [`ms-analytics-recommendations`](ms-analytics-recommendations/) | 8089 | DynamoDB | **Consume Kafka**: perfiles de navegación, **recomendaciones** y **métricas en tiempo real por WebSocket**. |
 | [`ms-cupones`](ms-cupones/) | 8092 | `cupones_db` | **Microservicio libre**: cupones de descuento. `ms-carrito` los aplica en el checkout (el total baja) y publica `CUPON_APLICADO` en Kafka. |
 | [`ms-kafka-admin`](ms-kafka-admin/) | 8091 | — | Administra Kafka por REST: crea, modifica y elimina tópicos y consulta consumer groups, offsets y lag. |
@@ -54,18 +54,12 @@ ms-carrito   --ITEM_AGREGADO/ELIMINADO/                           --> grupo anal
                COMPRA_REALIZADA---------->  [eventos.navegacion]
 ms-pago      --PAGO_APROBADO/RECHAZADO/
                FRAUDE_BLOQUEADO---------->  [eventos.pagos]       --> grupo analytics-metricas
-ms-pago      --INTENTO (cada pago)------->  [pagos.intentos]      --> grupo antifraude (ms-pago) --> bloqueo 15 min (DynamoDB)
 ```
 
 - **Clúster** en [`infra/deploy-ec2/ec2-kafka`](infra/deploy-ec2/ec2-kafka/): 3 Zookeeper + 3 brokers (`docker-compose.yml`),
   **Kafka-UI** (`docker-compose.ui.yml`, puerto 8090) y `ms-kafka-admin` (`docker-compose.admin.yml`).
-- **3 tópicos con 3 particiones y 3 réplicas** (`min.insync.replicas=2`: soportan la caída de un broker sin perder datos):
-  `eventos.navegacion` (retención 7 días), `eventos.pagos` (30 días) y `pagos.intentos` (1 día), con `cleanup.policy=delete`.
-  Se crean al levantar el clúster.
-- **Antifraude**: cada intento de pago va a `pagos.intentos` (clave = usuario). El grupo `antifraude` de `ms-pago` cuenta
-  los intentos en una ventana de 1 minuto; con más de 3, guarda el bloqueo en la tabla DynamoDB `pedidos360-bloqueos`
-  (TTL de 15 minutos). Mientras dure, los pagos de ese usuario responden **429**. Un ADMIN lo puede quitar con
-  `DELETE /api/pagos/bloqueos/{usuarioId}`. Si Kafka no responde, el intento se cuenta en el mismo servicio.
+- **2 tópicos con 3 particiones y 3 réplicas** (`min.insync.replicas=2`: soportan la caída de un broker sin perder datos):
+  `eventos.navegacion` (retención 7 días) y `eventos.pagos` (30 días), con `cleanup.policy=delete`. Se crean al levantar el clúster.
 - **Productores**: `acks=all` + idempotencia, JSON tipado sin cabecera de tipo Java, `max.block.ms` corto (si Kafka cae, la API
   de productos o carrito sigue funcionando). La clave del mensaje es el usuario: sus eventos van a una sola partición, en orden.
 - **Consumidores** (`@KafkaListener`, `concurrency=3`, offsets por registro): dos **consumer groups** leen el mismo tópico de forma independiente.

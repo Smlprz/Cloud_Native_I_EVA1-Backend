@@ -44,24 +44,12 @@ kafka:
   bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092,localhost:9093,localhost:9094}
   topics:
     pagos: eventos.pagos
-    # Intentos de pago (compra) de cada usuario: los cuenta el grupo "antifraude" de este mismo servicio.
-    intentos: pagos.intentos
 
-# Regla antifraude: un usuario con mas de max-intentos compras dentro de la ventana queda bloqueado
-# duracion-bloqueo-minutos. El bloqueo se guarda en DynamoDB (store=dynamodb) o en memoria (store=memory).
+# Regla antifraude: la misma tarjeta mas de max-intentos veces dentro de la ventana se bloquea.
 app:
   antifraude:
     max-intentos: ${ANTIFRAUDE_MAX_INTENTOS:3}
-    ventana-segundos: ${ANTIFRAUDE_VENTANA_SEGUNDOS:60}
-    duracion-bloqueo-minutos: ${ANTIFRAUDE_DURACION_BLOQUEO_MINUTOS:15}
-    kafka-habilitado: ${ANTIFRAUDE_KAFKA_HABILITADO:true}
-    grupo: antifraude
-    store: ${ANTIFRAUDE_STORE:memory}
-    dynamodb:
-      region: ${AWS_REGION:us-east-1}
-      # Solo para DynamoDB Local; en AWS se deja vacio y se usa el rol de la EC2.
-      endpoint: ${DYNAMODB_ENDPOINT:}
-      tabla: ${DYNAMODB_TABLA_BLOQUEOS:pedidos360-bloqueos}
+    ventana-segundos: ${ANTIFRAUDE_VENTANA_SEGUNDOS:10}
     # Se mezcla con el numero de tarjeta antes de aplicar SHA-256 (el numero nunca se guarda).
     pepper: ${CARD_HASH_PEPPER:pedidos360-pepper-solo-para-desarrollo}
   # Webpay Plus. Valores por defecto = ambiente de INTEGRACION con las credenciales publicas de prueba de Transbank.

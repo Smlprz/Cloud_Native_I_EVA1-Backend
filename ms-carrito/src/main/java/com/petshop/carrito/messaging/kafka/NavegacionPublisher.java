@@ -46,6 +46,11 @@ public class NavegacionPublisher {
         publicar(NavegacionEvent.COMPRA_REALIZADA, usuarioId, productoId, nombre, null, precio, cantidad);
     }
 
+    /** Envio (despacho) del pedido confirmado: nombre = "Pedido N° x", cantidad = unidades, precio = total. */
+    public void envioGestionado(String usuarioId, Long pedidoId, BigDecimal total, int unidades) {
+        publicar(NavegacionEvent.ENVIO_GESTIONADO, usuarioId, null, "Pedido N° " + pedidoId, null, total, unidades);
+    }
+
     private void publicar(String tipo, String usuarioId, Long productoId, String nombre, String categoria,
                           BigDecimal precio, int cantidad) {
         if (!habilitado) {

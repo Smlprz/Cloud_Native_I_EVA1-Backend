@@ -19,7 +19,7 @@ app:
     default-partitions: 3
     default-replication-factor: 3
     # Topicos del sistema: no se pueden eliminar desde la API.
-    protected-topics: ${KAFKA_PROTECTED_TOPICS:eventos.navegacion,eventos.pagos,pagos.intentos}
+    protected-topics: ${KAFKA_PROTECTED_TOPICS:eventos.navegacion,eventos.pagos}
   roles:
     admin: ${APP_ROLES_ADMIN:}
     vendedor: ${APP_ROLES_VENDEDOR:}

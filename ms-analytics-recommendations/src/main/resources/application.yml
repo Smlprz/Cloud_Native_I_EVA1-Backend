@@ -54,6 +54,9 @@ kafka:
 analytics:
   # memory = en memoria (desarrollo/pruebas) | dynamodb = Amazon DynamoDB (nube)
   store: ${ANALYTICS_STORE:memory}
+  ws:
+    # API Gateway WebSocket (pedidos360-ws): https://<id>.execute-api.<region>.amazonaws.com/<stage>. Vacio = desactivado.
+    gateway-endpoint: ${WS_GATEWAY_ENDPOINT:}
   dynamodb:
     region: ${AWS_REGION:us-east-1}
     # Solo para DynamoDB Local (desarrollo); en AWS se deja vacio y se usa el rol de la instancia.
